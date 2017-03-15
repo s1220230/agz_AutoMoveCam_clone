@@ -72,6 +72,7 @@
     <ClCompile Include="Contorl.cpp" />
     <ClCompile Include="Img_Proc.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SOM.cpp" />
     <ClCompile Include="Xbee_com.cpp" />
   </ItemGroup>
   <ItemGroup>
