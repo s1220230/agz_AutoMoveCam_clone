@@ -2,27 +2,33 @@
 
 cv::Mat Img(cv::Size(500, 500), CV_8UC3);
 
-void Init(int w, int h, cv::Mat &src){
+SOM::SOM(int width, int height, cv::UMat &src){
+	this->width = width/100;
+	this->height = height/100;
+	src.copyTo(this->image);
+}
+
+void SOM::Init(cv::Mat &src){
 	cv::Mat dst;
 	int calcNeuronNum; //近傍ニューロンの番号を取得
 	std::vector<Neuron> storeNeuron; //ニューロンの格納
-	for (int i = 0; i < h; i++){
-		for (int j = 0; j < w; j++){
+	for (int i = 0; i < height; i++){
+		for (int j = 0; j < width; j++){
 			Neuron neu; //ニューロン構造体
-			neu.id = i * w + j;
-			neu.p = cv::Point2i((j%w) * 10 + 200, (i % h) * 10 + 150); //ニューロンの初期位置
+			neu.id = i * width + j;
+			neu.p = cv::Point2i((j%width) * 10 + 200, (i % height) * 10 + 150); //ニューロンの初期位置
 			for (int k = i - 1; k < i + 2; k++){
 				for (int l = j - 1; l < j + 2; l++){
-					calcNeuronNum = k * w + l;
+					calcNeuronNum = k * width + l;
 
 					//4近傍の調査
 					if (k >= 0 && i - 1 == k && j == l){
 						neu.link.push_back(calcNeuronNum);
 					}
-					if (l <= h - 1 && i == k && j + 1 == l){
+					if (l <= height - 1 && i == k && j + 1 == l){
 						neu.link.push_back(calcNeuronNum);
 					}
-					if (k <= h - 1 && i + 1 == k && j == l){
+					if (k <= height - 1 && i + 1 == k && j == l){
 						neu.link.push_back(calcNeuronNum);
 					}
 					if (l >= 0 && i == k && j - 1 == l){
@@ -38,12 +44,12 @@ void Init(int w, int h, cv::Mat &src){
 		std::cout << "id : " << it.id << " position : " << it.p << std::endl;
 	}
 	Imgproc(src, dst);
-	som(w, h, storeNeuron, dst, src); //somの計算
+	som(width, height, storeNeuron, dst, src); //somの計算
 	std::cout << "fin" << std::endl;
 	cv::waitKey(0); //プログラムの終了
 }
 
-void InitImg(cv::Mat &img){
+void SOM::InitImg(cv::Mat &img){
 	for (int i = 0; i < img.rows; i++){
 		for (int j = 0; j < img.cols; j++){
 			img.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 255, 255);
@@ -51,14 +57,14 @@ void InitImg(cv::Mat &img){
 	}
 }
 
-void edgeline(std::vector<Neuron> &neu, cv::Mat &img){
+void SOM::edgeline(std::vector<Neuron> &neu, cv::Mat &img){
 	for (auto it : neu){
 		for (auto nei : it.link)
-			line(img, it.p, neu[nei].p, cv::Scalar(0, 0, 0), 1, CV_AA);
+			line(img, it.p, neu[nei].p, cv::Scalar(255, 0, 0), 1, CV_AA);
 	}
 }
 
-void showSOM(int index, std::vector<Neuron> &def){
+void SOM::showSOM(int index, std::vector<Neuron> &def){
 	static cv::Mat im;
 	Img.copyTo(im);
 
@@ -103,13 +109,13 @@ void showSOM(int index, std::vector<Neuron> &def){
 	cv::waitKey(1);
 }
 
-void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
+void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 	//src.copyTo(Img);
 	//InitImg(Img);
 	cv::namedWindow("s", 1);
 	std::vector<Neuron> defo = som;
-	int t = 1;
-	static int max_t = 20000;
+	float t = 1;
+	static float max_t = 5000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -155,8 +161,8 @@ void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 		std::vector<int> ne2;
 		std::vector<int> linked;
 
-		som[index].p.x = som[index].p.x + res.x * 3 * (1 / sqrt(t))*exp(-(distM*distM) / learncoeff*learncoeff);
-		som[index].p.y = som[index].p.y + res.y * 3 * (1 / sqrt(t))*exp(-(distM*distM) / learncoeff*learncoeff);
+		som[index].p.x = som[index].p.x + res.x *  learncoeff/2*exp(-(distM*distM) / learncoeff*learncoeff);
+		som[index].p.y = som[index].p.y + res.y *  learncoeff/2*exp(-(distM*distM) / learncoeff*learncoeff);
 		linked.push_back(index);
 		ne = som[index].link;
 		distM++;
@@ -166,8 +172,8 @@ void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 			for (auto it : ne){
 				res.x = randP.x - som[it].p.x;
 				res.y = randP.y - som[it].p.y;
-				som[it].p.x = som[it].p.x + res.x * 3 * (1 / sqrt(t))* exp(-(distM*distM) / learncoeff*learncoeff);
-				som[it].p.y = som[it].p.y + res.y * 3 * (1 / sqrt(t))* exp(-(distM*distM) / learncoeff*learncoeff);
+				som[it].p.x = som[it].p.x + res.x * learncoeff/4 * exp(-(distM*distM) / learncoeff*learncoeff);
+				som[it].p.y = som[it].p.y + res.y *  learncoeff/4 * exp(-(distM*distM) / learncoeff*learncoeff);
 				for (auto it : ne){
 					linked.push_back(it);
 				}
@@ -206,10 +212,10 @@ void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 			ne2.clear();
 		}
 		for (auto it : som){
-			cv::circle(cpimg, it.p, 1, cv::Scalar(0, 0, 0), -1, CV_AA);
+			cv::circle(cpimg, it.p, 3, cv::Scalar(0, 0, 0), -1, CV_AA);
 		}
 		edgeline(som, cpimg);
-		if (t % 1000 == 0){
+		if (int(t) % 100 == 0){
 
 			cv::imshow("s", cpimg);
 			cv::waitKey(2);
@@ -220,19 +226,16 @@ void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 	}
 }
 
-bool cmp(int A, int B){
-	return A < B ? 1 : 0;
-}
-
-void Imgproc(cv::Mat &src, cv::Mat &dst){
+void SOM::Imgproc(cv::Mat &src, cv::Mat &dst){
 
 	cv::cvtColor(src, src, CV_BGR2GRAY);
 
 	cv::threshold(src, dst, 0, 255, CV_THRESH_BINARY_INV | CV_THRESH_OTSU);
+	imshow("input_image",src);
 
 }
 
-std::vector<cv::Point2f> storePoint(cv::Mat &img){
+std::vector<cv::Point2f> SOM::storePoint(cv::Mat &img){
 	std::vector<cv::Point2f> p;
 	for (int j = 0; j < img.rows; j++){
 		for (int i = 0; i < img.cols; i++){
@@ -241,8 +244,13 @@ std::vector<cv::Point2f> storePoint(cv::Mat &img){
 				p.push_back(ce);
 			}
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
-	std::cout << p[68684] << std::endl;
+	//std::cout << p[68684] << std::endl;
 	return p;
+}
+
+
+bool cmp(int A, int B){
+	return A < B ? 1 : 0;
 }
