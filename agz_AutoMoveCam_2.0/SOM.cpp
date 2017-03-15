@@ -1,4 +1,4 @@
-#include"SOM.h"
+#include"Som.h"
 
 cv::Mat Img(cv::Size(500, 500), CV_8UC3);
 
