@@ -1,6 +1,7 @@
 #include "Xbee_com.h"
 #include "Img_proc.h"
 #include "Control.h"
+#include "Som.h"
 #include <conio.h>
 #include <fstream>
 #include <time.h>
@@ -118,9 +119,16 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	for (int i = 0; i < Pos.size(); i++){
 		pt[i] = Pos[i];
 	}
-	//cv::Mat ss;
-	//src_frame.copyTo(ss);
-	//cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(0, 0, 200));//‘½ŠpŒ`‚ð•`‰æ
+	SOM s = SOM(width,height,src_frame);
+	//cv::Mat ss = cv::Mat::ones(src_frame.size(),CV_8UC3);
+	cv::Mat_<cv::Vec3b> ss(src_frame.size());
+	for (int j = 0; j<src_frame.rows; j++){
+		for (int i = 0; i<src_frame.cols; i++){
+			ss(j, i) = cv::Vec3b(255,255,255);
+		}
+	}
+	cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(0, 0, 200));//‘½ŠpŒ`‚ð•`‰æ
+	s.Init(ss);
 
 	//------------------“§Ž‹•ÏŠ·-----------------------------------------------
 	imp.Perspective(src_frame, dst_img, Pos);
