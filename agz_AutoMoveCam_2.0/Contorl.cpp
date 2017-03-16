@@ -171,10 +171,10 @@ void Control::is_out(void){
 	c3 = DC.cross(DP);
 	c4 = DP.cross(DA);
 
-	if ((c1 >= 0 && c2 >= 0) || (c1 < 0 && c2 < 0)) {
+	if (c1 < 0 && c2 < 0) {
 		flag1 = true;
 	}
-	if ((c3 >= 0 && c4 >= 0) || (c3 < 0 && c4 < 0)) {
+	if (c3 < 0 && c4 < 0) {
 		flag2 = true;
 	}
 	if (flag1 && flag2) {

@@ -2,9 +2,12 @@
 
 cv::Mat Img(cv::Size(500, 500), CV_8UC3);
 
-SOM::SOM(int width, int height, cv::UMat &src){
+SOM::SOM(int width, int height, std::vector<cv::Point2f> &Pos, cv::UMat &src){
 	this->width = width/100;
 	this->height = height/100;
+	for (auto it : Pos){
+		this->P.push_back(it);
+	}
 	src.copyTo(this->image);
 }
 
@@ -115,7 +118,7 @@ void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &ori
 	cv::namedWindow("s", 1);
 	std::vector<Neuron> defo = som;
 	float t = 1;
-	static float max_t = 5000;
+	static float max_t = 10000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -129,8 +132,10 @@ void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &ori
 	srand(2);
 
 	std::vector<cv::Point2f> random = storePoint(src);
-
+	std::vector<cv::Point2f> random2 = storeBorderPoint();
 	std::cout << random.size() << std::endl;
+	std::cout << random2.size() << std::endl;
+
 
 	while (t < max_t){
 		origin.copyTo(cpimg);
@@ -138,9 +143,20 @@ void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &ori
 		index = 0;
 		count = 0;
 		learncoeff = 1 - float(t / max_t);
-		ind = rand()*rand() % random.size() + 1; //randÇÇQå¬Ç©ÇØÇƒîÕàÕÇçLÇ∞ÇÈ
-		randP = random[ind];
-
+		if (t > 0 * max_t && t <0.6 * max_t || t > 0.70*max_t && t < 0.84 *max_t ){
+			ind = rand()*rand() % random.size() ; //randÇÇQå¬Ç©ÇØÇƒîÕàÕÇçLÇ∞ÇÈ
+			randP = random[ind];
+		}
+		else if (t > 0.94*max_t){
+			randP = this->P[rand() %  this->P.size()];
+		}
+		else{
+			ind = rand() % random2.size(); //randÇÇQå¬Ç©ÇØÇƒîÕàÕÇçLÇ∞ÇÈ
+			//std::cout<<"ind : " << ind << std::endl;
+			
+			randP = random2[ind];
+			std::cout << "ind : "<< ind << "posi : "<< randP << std::endl;
+		}
 		//std::cout <<"ind : "<<ind << " randP : "<< randP << std::endl;
 		//randP = cv::Point2f(rand() % 500 + 1, rand() % 500 + 1); //500x500ÇÃê≥ï˚å`ÇÃÉâÉìÉ_ÉÄÉvÉçÉbÉg
 		//if ((randP.x - 250)*(randP.x - 250) + (randP.y - 250)*(randP.y - 250) > 200 * 200) continue;
@@ -161,8 +177,8 @@ void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &ori
 		std::vector<int> ne2;
 		std::vector<int> linked;
 
-		som[index].p.x = som[index].p.x + res.x *  learncoeff/2*exp(-(distM*distM) / learncoeff*learncoeff);
-		som[index].p.y = som[index].p.y + res.y *  learncoeff/2*exp(-(distM*distM) / learncoeff*learncoeff);
+		som[index].p.x = som[index].p.x + res.x * learncoeff/3*exp(-(distM*distM) / learncoeff*learncoeff);
+		som[index].p.y = som[index].p.y + res.y * learncoeff/3*exp(-(distM*distM) / learncoeff*learncoeff);
 		linked.push_back(index);
 		ne = som[index].link;
 		distM++;
@@ -173,7 +189,7 @@ void SOM::som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &ori
 				res.x = randP.x - som[it].p.x;
 				res.y = randP.y - som[it].p.y;
 				som[it].p.x = som[it].p.x + res.x * learncoeff/4 * exp(-(distM*distM) / learncoeff*learncoeff);
-				som[it].p.y = som[it].p.y + res.y *  learncoeff/4 * exp(-(distM*distM) / learncoeff*learncoeff);
+				som[it].p.y = som[it].p.y + res.y * learncoeff/4 * exp(-(distM*distM) / learncoeff*learncoeff);
 				for (auto it : ne){
 					linked.push_back(it);
 				}
@@ -250,6 +266,49 @@ std::vector<cv::Point2f> SOM::storePoint(cv::Mat &img){
 	return p;
 }
 
+std::vector<cv::Point2f> SOM::storeBorderPoint(){
+	std::vector<cv::Point2f> p;
+	cv::Point2f mid,mid2;
+	//for (int i = 0; i < P.size(); i++){
+	//	p.push_back(P[i]);
+	//	if (i + 1 < P.size()){
+	//		mid = cv::Point2f((P[i+1].x + 2*P[i].x) / 3, (P[i+1].y + 2*P[i].y) / 3);
+	//		mid2 = cv::Point2f((2*P[i + 1].x + P[i].x) / 3 , (2*P[i + 1].y + P[i].y) / 3 * 2);
+	//		p.push_back(mid);
+	//		p.push_back(mid2);
+	//	}
+	//	else{
+	//		mid = cv::Point2f((P[0].x + 2*P[i].x) / 3, (P[0].y + 2*P[i].y) / 3);
+	//		mid2 = cv::Point2f((2*P[0].x + P[i].x) / 3 , (2*P[0].y + P[i].y) / 3 );
+	//		p.push_back(mid);
+	//		p.push_back(mid2);
+	//	}
+	//}
+
+	for (int i = 0; i < P.size(); i++){
+		p.push_back(P[i]);
+		if (i+1<P.size()){
+			for (int j = 1; j < 101; j++){
+					mid = cv::Point2f(((100 - j)*P[i + 1].x + j * P[i].x) / 100,
+									  ((100 - j)*P[i + 1].y + j * P[i].y) / 100);
+					//mid2 = cv::Point2f((P[i + 1].x + i * P[i].x) / (100), (P[i + 1].y + i * P[i].y) / (100));
+					p.push_back(mid);
+				}
+		}
+
+	
+		else{
+			for (int j = 1; j < 101; j++){
+				
+					mid = cv::Point2f(((100 - j)*P[0].x + j * P[i].x) / (100),
+						              ((100 - j)*P[0].y + j * P[i].y) / (100));
+					//mid2 = cv::Point2f((P[i + 1].x + i * P[i].x) / (100), (P[i + 1].y + i * P[i].y) / (100));
+					p.push_back(mid);
+			}
+		}
+	}
+	return p;
+}
 
 bool cmp(int A, int B){
 	return A < B ? 1 : 0;

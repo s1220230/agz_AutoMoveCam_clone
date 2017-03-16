@@ -119,7 +119,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	for (int i = 0; i < Pos.size(); i++){
 		pt[i] = Pos[i];
 	}
-	SOM s = SOM(width,height,src_frame);
+	SOM s = SOM(width,height,Pos,src_frame);
 	//cv::Mat ss = cv::Mat::ones(src_frame.size(),CV_8UC3);
 	cv::Mat_<cv::Vec3b> ss(src_frame.size());
 	for (int j = 0; j<src_frame.rows; j++){

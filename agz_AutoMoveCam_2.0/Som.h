@@ -10,6 +10,8 @@ class SOM{
 private:
 	int width,height;
 	cv::UMat image;
+	std::vector<cv::Point2f> P;
+
 	/* 構造体 Neuron を定義 */
 	typedef struct {
 		int id;					/*ニューロンID*/
@@ -19,7 +21,7 @@ private:
 	} Neuron;
 
 public:
-	SOM(int width, int height, cv::UMat &src);
+	SOM(int width, int height, std::vector<cv::Point2f> &Pos , cv::UMat &src);
 	/**
 	* @fn
 	* SOM(自己組織化マップ)の生成を行う関数
@@ -85,6 +87,8 @@ public:
 	void Imgproc(cv::Mat &src, cv::Mat &dst);
 
 	std::vector<cv::Point2f> storePoint(cv::Mat &img);
+
+	std::vector<cv::Point2f> storeBorderPoint();
 };
 
 
