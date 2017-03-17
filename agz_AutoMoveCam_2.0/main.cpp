@@ -77,6 +77,9 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	cv::Mat field;
 	cv::UMat src_frame,dst_img;
 	
+	cv::Mat sample_img = cv::imread("test2.JPG",1);
+	if (!sample_img.data)exit(0);
+	cv::resize(sample_img,sample_img,cv::Size(),0.15,0.15);
 	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
 	std::cout << "横 : ";    std::cin >> width;
 	std::cout << "縦 : ";    std::cin >> height;
@@ -100,7 +103,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	for (int i = 0; i < 10; i++) {
 		imp.getFrame().copyTo(src_frame);//@comment 1フレーム取得
 	}
-
+	sample_img.copyTo(src_frame);
 	std::cout << "水田の4点をクリックしてください" << std::endl;
 	
 	//------------------座標取得-----------------------------------------------

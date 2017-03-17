@@ -82,7 +82,7 @@ public:
 	* @sa     -
 	* @detail -
 	*/
-	void showSOM(int index, std::vector<Neuron> &def);
+	void showSOM(int index,std::vector<int> &linked, std::vector<Neuron> &def);
 
 	void Imgproc(cv::Mat &src, cv::Mat &dst);
 
