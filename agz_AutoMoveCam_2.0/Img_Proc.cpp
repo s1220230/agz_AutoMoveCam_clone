@@ -230,3 +230,12 @@ void Img_Proc::plot_field(cv::UMat &src, cv::Point2f sz){
 	//------------------直進領域のプロット--------------------------------------
 	cv::rectangle(src,cv::Point(100,100),cv::Point(sz.x - 100, sz.y - 100),cv::Scalar(200,0,0),3);
 }
+
+//void Img_Proc::plot_SOM(cv::UMat &src,SOM som){
+//som.
+//	for (auto it : s){
+//		cv::circle(src,it.p,3,cv::Scalar(0,0,255,-1,CV_AA));
+//	}
+//
+//}
+

@@ -1,7 +1,6 @@
 #include "Xbee_com.h"
 #include "Img_proc.h"
 #include "Control.h"
-#include "Som.h"
 #include <conio.h>
 #include <fstream>
 #include <time.h>
@@ -15,6 +14,7 @@ cv::Point2i target, P0[5] = { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } }
 cv::Point2i pre_point; // @comment Point構造体<int型>
 int action;			   //ロボットの動作変数 1:前進 2:右旋回 4:左
 
+SOM s = SOM();
 
 //データ出力用csvファイル　
 std::string setFilename(std::string str){
@@ -34,7 +34,7 @@ std::string setFilename(std::string str){
 //取得座標位置に円をプロット
 void drawPoint(cv::Mat* img, cv::Point2i point){
 	cv::circle(*img, point, 8, cv::Scalar(0, 255, 0), -1, CV_AA);
-	cv::imshow("getCoordinates",*img);
+	cv::imshow("getCoordinates", *img);
 }
 
 //水田領域の座標取得用関数
@@ -47,7 +47,7 @@ void getCoordinates(int event, int x, int y, int flags, void* param)
 		if (count == 0) {
 			Pos.push_back(cv::Point2f(x, y));
 			drawPoint(image, cv::Point2i(x, y));
-			std::cout << "Ax :" << x << ", Ay: " << y << std::endl;	
+			std::cout << "Ax :" << x << ", Ay: " << y << std::endl;
 		}
 		else if (count == 1) {
 			Pos.push_back(cv::Point2f(x, y));
@@ -73,18 +73,18 @@ void getCoordinates(int event, int x, int y, int flags, void* param)
 
 //画像を取得し,水田領域を設定
 void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
-	int width,height;
+	int width, height;
 	cv::Mat field;
-	cv::UMat src_frame,dst_img;
-	
-	cv::Mat sample_img = cv::imread("test2.JPG",1);
+	cv::UMat src_frame, dst_img;
+
+	cv::Mat sample_img = cv::imread("test2.JPG", 1);
 	if (!sample_img.data)exit(0);
-	cv::resize(sample_img,sample_img,cv::Size(),0.15,0.15);
+	cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15);
 	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
 	std::cout << "横 : ";    std::cin >> width;
 	std::cout << "縦 : ";    std::cin >> height;
 	std::cout << std::endl;
-	
+
 	width *= 100;
 	height *= 100;
 
@@ -95,17 +95,17 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 		system("PAUSE");
 		exit(0);
 	}
-	imp.setField(width,height);
-	nm30_init();				
+	imp.setField(width, height);
+	nm30_init();
 	nm30_set_panorama_mode(1, 11); //@comment 魚眼補正
 
 	//@comment 始めの方のフレームは暗い可能性があるので読み飛ばす
 	for (int i = 0; i < 10; i++) {
 		imp.getFrame().copyTo(src_frame);//@comment 1フレーム取得
 	}
-	sample_img.copyTo(src_frame);
+	//sample_img.copyTo(src_frame);
 	std::cout << "水田の4点をクリックしてください" << std::endl;
-	
+
 	//------------------座標取得-----------------------------------------------
 	//画像中からマウスで4点を取得その後ESCキーを押すと変換処理が開始する
 	cv::namedWindow("getCoordinates");
@@ -122,15 +122,21 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	for (int i = 0; i < Pos.size(); i++){
 		pt[i] = Pos[i];
 	}
-	SOM s = SOM(width,height,Pos,src_frame);
+	s.set_size(width, height);
+	s.set_pos(Pos);
+	s.set_img(src_frame);
 	//cv::Mat ss = cv::Mat::ones(src_frame.size(),CV_8UC3);
 	cv::Mat_<cv::Vec3b> ss(src_frame.size());
-	for (int j = 0; j<src_frame.rows; j++){
-		for (int i = 0; i<src_frame.cols; i++){
-			ss(j, i) = cv::Vec3b(255,255,255);
+	for (int j = 0; j < src_frame.rows; j++){
+		for (int i = 0; i < src_frame.cols; i++){
+			ss(j, i) = cv::Vec3b(255, 255, 255);
 		}
 	}
-	cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(0, 0, 200));//多角形を描画
+	cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
+	//cv::imwrite("./image/Signal_area.png",ss);
+	//cv::imwrite("./image/Plot.png",field);
+	//cv::fillConvexPoly(field, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
+	//cv::imwrite("./image/Field.png", field);
 	s.Init(ss);
 
 	//------------------透視変換-----------------------------------------------
@@ -138,14 +144,14 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 }
 
 //制御ループ
-void Moving(HANDLE &arduino, Xbee_com &xbee ,Img_Proc &imp){
+void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 	cv::Mat element = cv::Mat::ones(3, 3, CV_8UC1); //2値画像膨張用行列
 	cv::Mat heatmap_img(cv::Size(500, 500), CV_8UC3, cv::Scalar(255, 255, 255));
 	int frameNum = 0;								//フレーム数保持変数
-	cv::UMat src,dst,colorExtra,pImg,binari_2;
-	cv::Point2f sz= imp.getField();
-	Control control(sz.x, sz.y);					
-	control.set_target();
+	cv::UMat src, dst, colorExtra, pImg, binari_2, copyImg;
+	cv::Point2f sz = imp.getField();
+	Control control(sz.x, sz.y);
+	control.set_target(s);
 	char command = 's';
 	int ypos;
 	int ydef = 0;	//補正なし重心座標値
@@ -165,7 +171,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee ,Img_Proc &imp){
 	//cv::createTrackbar("S", "colorExt", &s_value, 255);
 	//cv::createTrackbar("V", "colorExt", &v_value, 255);
 	///////////////////////////////////////////////////////////////
-	
+
 	while (1){
 		imp.getFrame().copyTo(src);
 		if (frameNum % 1 == 0){
@@ -173,116 +179,125 @@ void Moving(HANDLE &arduino, Xbee_com &xbee ,Img_Proc &imp){
 				command = _getch();
 				if (command == 's') {
 					xbee.sentManualCommand(byte(0x00), arduino);
-					std::cout << "停止" << std::endl<<std::endl;
+					std::cout << "停止" << std::endl << std::endl;
 				}
 				if (command == 'm') {
 					xbee.sentManualCommand(byte(0x01), arduino);
-					std::cout << "手動掃引 "<<std::endl<<std::endl;
+					std::cout << "手動掃引 " << std::endl << std::endl;
 				}
 				if (command == 'a') {
 					xbee.sentManualCommand(byte(0x01), arduino);
-					std::cout << "自動掃引" << std::endl<<std::endl;
+					std::cout << "自動掃引" << std::endl << std::endl;
 				}
 			}
-		//@comment 画像をリサイズ(大きすぎるとディスプレイに入りらないため)
-		//cv::resize(src, dst, cv::Size(sz.x, sz.y), CV_8UC3);
-		warpPerspective(src, dst, imp.getPersMat(), cv::Size(sz.x, sz.y),CV_INTER_LINEAR);
-		
-		//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
-		//@comment hsvを利用して赤色を抽出
-		//入力画像、出力画像、変換、h最小値、h最大値、s最小値、s最大値、v最小値、v最大値 h:(0-180)実際の1/2
-		//imp.colorExtraction(dst, colorExtra, CV_BGR2HSV, h_value, h_value2, s_value, 255, v_value, 255);
-		imp.colorExtraction(dst, colorExtra, CV_BGR2HSV, 160, 10,70, 255, 70, 255);
-		colorExtra.copyTo(pImg);
-		cv::cvtColor(colorExtra, colorExtra, CV_BGR2GRAY);//@comment グレースケールに変換
+			//@comment 画像をリサイズ(大きすぎるとディスプレイに入りらないため)
+			//cv::resize(src, dst, cv::Size(sz.x, sz.y), CV_8UC3);
+			src.copyTo(copyImg);
+			src.copyTo(dst);
+			//warpPerspective(src, dst, imp.getPersMat(), cv::Size(sz.x, sz.y), CV_INTER_LINEAR);
+
+			//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
+			//@comment hsvを利用して赤色を抽出
+			//入力画像、出力画像、変換、h最小値、h最大値、s最小値、s最大値、v最小値、v最大値 h:(0-180)実際の1/2
+			//imp.colorExtraction(dst, colorExtra, CV_BGR2HSV, h_value, h_value2, s_value, 255, v_value, 255);
+			imp.colorExtraction(dst, colorExtra, CV_BGR2HSV, 160, 10, 70, 255, 70, 255);
+			colorExtra.copyTo(pImg);
+			cv::cvtColor(colorExtra, colorExtra, CV_BGR2GRAY);//@comment グレースケールに変換
 
 
-		//----------------------二値化-----------------------------------------------
-		cv::threshold(colorExtra, binari_2, 0, 255, CV_THRESH_BINARY);
-		cv::dilate(binari_2, binari_2, element, cv::Point(-1, -1), 3); //膨張処理3回 最後の引数で回数を設定
+			//----------------------二値化-----------------------------------------------
+			cv::threshold(colorExtra, binari_2, 0, 255, CV_THRESH_BINARY);
+			cv::dilate(binari_2, binari_2, element, cv::Point(-1, -1), 3); //膨張処理3回 最後の引数で回数を設定
 
-		//---------------------面積計算,重心取得-----------------------------------------------
-		//取得した領域の中で一番面積の大きいものを対象としてその対象の重心を求める。
-		cv::Point2i point = imp.serchMaxArea(binari_2, pImg);
-		if (!GRAVITY)
-		{
-			point = imp.calculate_center(binari_2);//@comment momentで白色部分の重心を求める
-			std::cout << "posion: " << point.x << " " << point.y << std::endl;//@comment 重心点の表示
-		}
-
-		if (point.x != 0) {
-			ypos = sz.y - (point.y + 6 * ((1000 / point.y) + 1));
-			ydef = sz.y - point.y;//@comment 補正なしｙ重心
-			//std::cout << point.x << " " << ypos << std::endl; //@comment 変換画像中でのロボットの座標(重心)
-			ofs << point.x << ", " << ydef << ", " << ypos << std::endl; //@comment 変換
-		}
-		//---------------------ロボットの動作取得------------------------------------
-		//if (frame % 2 == 0){
-		P1 = cv::Point2f( point.x, sz.y - ydef );
-		if (P1.x != 0 && P1.y != 0) {
-			// ターゲットの更新
-			if (control.is_updateTarget()){
-				//std::cout << "target number : " << control.get_target() << std::endl;
+			//---------------------面積計算,重心取得-----------------------------------------------
+			//取得した領域の中で一番面積の大きいものを対象としてその対象の重心を求める。
+			cv::Point2i point = imp.serchMaxArea(binari_2, pImg);
+			if (!GRAVITY)
+			{
+				point = imp.calculate_center(binari_2);//@comment momentで白色部分の重心を求める
+				std::cout << "posion: " << point.x << " " << point.y << std::endl;//@comment 重心点の表示
 			}
-			// 現在のロボットの位置情報の更新
-			control.set_point(P1);
 
-			// ロボットの動作決定
-			action = control.robot_action(P0[4]);
-			
-			// ターゲットの訪問回数更新
-			//num = control.target_count();
+			if (point.x != 0) {
+				ypos = sz.y - (point.y + 6 * ((1000 / point.y) + 1));
+				ydef = sz.y - point.y;//@comment 補正なしｙ重心
+				//std::cout << point.x << " " << ypos << std::endl; //@comment 変換画像中でのロボットの座標(重心)
+				ofs << point.x << ", " << ydef << ", " << ypos << std::endl; //@comment 変換
+			}
+			//---------------------ロボットの動作取得------------------------------------
+			//if (frame % 2 == 0){
+			P1 = cv::Point2f(point.x, sz.y - ydef);
+			if (P1.x != 0 && P1.y != 0) {
+				// ターゲットの更新
+				if (control.is_updateTarget()){
+					//std::cout << "target number : " << control.get_target() << std::endl;
+				}
+				// 現在のロボットの位置情報の更新
+				control.set_point(P1);
 
-			control.heatmap(control.area_count(), &heatmap_img, &imp.makeColorbar());
-			// 内外判定
-			control.is_out();
-			for (int i = 1; i < 5; i++){
-				P0[i] = P0[i - 1];
+				// ロボットの動作決定
+				action = control.robot_action(P0[4]);
+
+				// ターゲットの訪問回数更新
+				//num = control.target_count();
+
+				control.heatmap(control.area_count(), &heatmap_img, &imp.makeColorbar());
+				// 内外判定
+				control.is_out();
+				for (int i = 1; i < 5; i++){
+					P0[i] = P0[i - 1];
+				}
+			}
+			else{
+				action = 0;
+			}
+			P0[0] = P1;
+			//} //ロボットの動作取得
+
+			if (command == 'a'){
+				xbee.sentAigamoCommand(action, arduino);
+			}
+			//std::cout << "cmd " << int(command) << std::endl;
+
+			//-------------------重心点のプロット----------------------------------------- 
+			if (!point.y == 0) { //@comment point.y == 0の場合はexceptionが起こる( 0除算 )
+				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
+				circle(copyImg, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
+				//@comment 重心点の移動履歴
+				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
+
+
+				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
+				circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
+				//@comment 重心点の移動履歴
+				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
+			}
+
+			//------------------ターゲットのプロット--------------------------------------
+			control.plot_target(copyImg, P0[4]);
+
+			//------------------マス, 直進領域のプロット--------------------------------------
+			s.showSOM2(copyImg);
+			//imp.plot_field(dst,sz);
+
+			//---------------------表示部分----------------------------------------------
+
+			//cv::resize(dst, dst, cv::Size(700, 700));
+
+			cv::imshow("dst_image", dst);//@comment 出力画像
+			cv::imshow("copyImg", copyImg);
+			//cv::imshow("colorExt", extra_img);//@comment 赤抽出画像
+			//cv::imshow("plot_img", pImg);
+
+			//@comment "q"を押したらプログラム終了
+			if (src.empty() || cv::waitKey(50) == 113)
+			{
+				cv::destroyAllWindows();
+				ofs.close(); //@comment ファイルストリームの解放
+				break;
 			}
 		}
-		else{
-			action = 0;
-		}
-		P0[0] = P1;
-		//} //ロボットの動作取得
-
-		if (command == 'a'){
-			//std::cout << "send" << std::endl;
-			xbee.sentAigamoCommand(action,arduino);
-		}
-		//std::cout << "cmd " << int(command) << std::endl;
-
-		//-------------------重心点のプロット----------------------------------------- 
-		if (!point.y == 0) { //@comment point.y == 0の場合はexceptionが起こる( 0除算 )
-			circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-			circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
-			//@comment 重心点の移動履歴
-			circle(pImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
-		}
-
-		//------------------ターゲットのプロット--------------------------------------
-		control.plot_target(dst, P0[4]);
-
-		//------------------マス, 直進領域のプロット--------------------------------------
-		imp.plot_field(dst,sz);
-
-		//---------------------表示部分----------------------------------------------
-
-		cv::resize(dst, dst, cv::Size(700, 700));
-
-		cv::imshow("dst_image", dst);//@comment 出力画像
-		//cv::imshow("colorExt", extra_img);//@comment 赤抽出画像
-		//cv::imshow("plot_img", pImg);
-
-		//@comment "q"を押したらプログラム終了
-		if (src.empty() || cv::waitKey(50) == 113)
-		{
-			cv::destroyAllWindows();
-			ofs.close(); //@comment ファイルストリームの解放
-			break;
-		}
-		}
-	frameNum++;
+		frameNum++;
 	} ///end whileq
 	ofs.close(); //@comment ファイルストリームの解放
 }
@@ -291,9 +306,9 @@ void Moving(HANDLE &arduino, Xbee_com &xbee ,Img_Proc &imp){
 void AutoMove(){
 	HANDLE hdl;							//COMポート通信ハンドル
 	Img_Proc imp = Img_Proc(CAM_ID);    //画像処理用クラス
-	Xbee_com xbee = Xbee_com(com,hdl); 	//xbee通信の初期化
-	setUp(com, hdl,imp);				//初期セットアップ
-	Moving(hdl,xbee,imp);				//自動制御ループ
+	Xbee_com xbee = Xbee_com(com, hdl); 	//xbee通信の初期化
+	setUp(com, hdl, imp);				//初期セットアップ
+	Moving(hdl, xbee, imp);				//自動制御ループ
 }
 
 int main(int argc, char *argv[]){

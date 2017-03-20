@@ -2,9 +2,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-//#define wi 700
-//#define he 100
 
+#include "SOM.h"
 
 class Control{
 private:
@@ -19,7 +18,9 @@ private:
 	std::string out;
 
 	struct target{
+		// ターゲット座標
 		cv::Point2i point;
+		// ターゲット番号
 		int n;
 	};
 
@@ -62,7 +63,7 @@ public:
 	void heatmap(cv::Point2i pos, cv::Mat *img, cv::Mat *bar);
 
 	//	set function
-	void set_target(void);
+	void set_target(SOM som);
 	void set_point(cv::Point2i p);
 
 

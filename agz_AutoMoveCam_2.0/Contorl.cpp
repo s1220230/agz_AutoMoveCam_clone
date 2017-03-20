@@ -1,6 +1,6 @@
 #include "Control.h"
 
-#define PROGRAM 1
+#define PROGRAM 2
 
 
 
@@ -39,7 +39,7 @@ bool Control::is_updateTarget(void){
 
 	bool result = false;
 
-	if (PROGRAM == 0){
+	if (PROGRAM == 0 || PROGRAM == 2){
 		int dx = nowPoint.x - nowTarget_itr->point.x;
 		int dy = nowPoint.y - nowTarget_itr->point.y;
 		double d = sqrt(dx * dx + dy * dy);
@@ -194,12 +194,12 @@ void Control::plot_target(cv::UMat &img, cv::Point2i Previous){
 	// すべてのターゲットのプロット（水色）
 	for (std::vector<target>::iterator itr = allTarget.begin(); itr != allTarget.end(); itr++) {
 
-		cv::circle(img, cv::Point(itr->point), 28, cv::Scalar(255, 255, 0), 3, 4);
+		cv::circle(img, cv::Point(itr->point), 20, cv::Scalar(255, 255, 0), 3, 4);
 		cv::putText(img, std::to_string(itr->n), cv::Point(itr->point), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 0.5, CV_AA);
 	}
 
 	// 現在向かうべきターゲットのプロット（黒）
-	cv::circle(img, cv::Point(nowTarget_itr->point), 28, cv::Scalar(0, 0, 0), 3, 4);
+	cv::circle(img, cv::Point(nowTarget_itr->point), 20, cv::Scalar(0, 0, 0), 3, 4);
 
 	line(img, nowPoint, Previous, cv::Scalar(255, 0, 0), 2, CV_AA);
 
@@ -295,10 +295,8 @@ void Control::heatmap(cv::Point2i pos, cv::Mat *img, cv::Mat *bar){
 		}
 	}
 
-	//cv::resize(*img, *img, cv::Size(500, 500));
 	vconcat(*bar, *img, concat_img);
-	//cv::putText(concat_img, "1", cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1.0, CV_AA);
-
+	
 	int value = max_count / 5;
 	for (int i = 0; i < 5; i++){
 		cv::putText(concat_img, std::to_string(i*value), cv::Point(0 + 100 * i, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1.0, CV_AA);
@@ -313,7 +311,7 @@ void Control::heatmap(cv::Point2i pos, cv::Mat *img, cv::Mat *bar){
 //
 ////////////////////////////////////////////////
 
-void Control::set_target(void) {
+void Control::set_target(SOM som) {
 	target t;
 
 	allTarget.clear();
@@ -355,6 +353,34 @@ void Control::set_target(void) {
 			t.n = num;
 			allTarget.push_back(t);
 			num++;
+		}
+	}
+
+	if (PROGRAM == 2){
+		for (int i = 0; i < (height / 100); i++) {
+			// 左から右へターゲットを設定する
+			if (i % 2 == 0){
+				for (int j = 0; j < (width / 100); j++) {
+					std::cout << (width/100)*i+j << std::endl;
+					t.point = som.calc_centerPoint((width/100+1)*i+j);
+					t.n = num;
+					allTarget.push_back(t);
+					num++;
+					std::cout << t.point << " " << t.n << std::endl;
+				}
+			}
+			// 右から左へターゲットを設定する
+			else {
+				for (int j = (width / 100)-1; j >= 0; j--) {
+					t.point = som.calc_centerPoint((width/100+1)*i+j);
+					t.n = num;
+					allTarget.push_back(t);
+					num++;
+					std::cout << t.point << " " << t.n << std::endl;
+				}
+			}
+
+			std::cout << t.point << " " << t.n << std::endl;
 		}
 	}
 

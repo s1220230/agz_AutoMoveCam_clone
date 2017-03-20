@@ -20,7 +20,11 @@ private:
 		cv::Point2f weight;		/*ÉjÉÖÅ[ÉçÉìÇÃâ◊èd*/
 	} Neuron;
 
+
+	std::vector<Neuron> som;
+
 public:
+	SOM();
 	SOM(int width, int height, std::vector<cv::Point2f> &Pos , cv::UMat &src);
 	/**
 	* @fn
@@ -68,7 +72,7 @@ public:
 	* @sa     -
 	* @detail -
 	*/
-	void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin);
+	void calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin);
 
 
 
@@ -82,14 +86,29 @@ public:
 	* @sa     -
 	* @detail -
 	*/
-	void showSOM(int index,std::vector<int> &linked, std::vector<Neuron> &def);
+	void showSOM(int index,std::vector<int> &linked, std::vector<Neuron> &def, int time);
 
 	void Imgproc(cv::Mat &src, cv::Mat &dst);
 
 	std::vector<cv::Point2f> storePoint(cv::Mat &img);
 
 	std::vector<cv::Point2f> storeBorderPoint();
+
+	std::string setImageName(std::string str, int time);
+
+	cv::Point2f calc_centerPoint(int id);
+
+	void set_size(int width, int height);
+
+	void set_pos(std::vector<cv::Point2f> &Pos);
+
+	void set_img(cv::UMat &src);
+
+	void showSOM2(cv::UMat &src);
+
+	cv::Point2f calc_weight(cv::Point2f a, cv::Point2f b, cv::Point2f c, cv::Point2f d);
 };
 
 
 bool cmp(int A, int B);
+

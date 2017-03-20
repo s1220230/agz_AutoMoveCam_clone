@@ -1,23 +1,20 @@
-﻿2017/03/17 19:08:29 にビルドを開始しました。
+﻿2017/03/20 13:07:47 にビルドを開始しました。
      1>ノード 2 上のプロジェクト "C:\Users\fumi0\Source\Repos\agz_AutoMoveCam2.02\agz_AutoMoveCam_2.0\agz_AutoMoveCam_2.0.vcxproj" (Build ターゲット)。
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /wd4996 /analyze- /errorReport:prompt SOM.cpp
-         SOM.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /wd4996 /analyze- /errorReport:prompt main.cpp
+         main.cpp
      1>c:\users\fumi0\source\repos\agz_automovecam2.02\library\opencv3\build\include\opencv2\core\mat.hpp(1965): warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
      1>c:\users\fumi0\source\repos\agz_automovecam2.02\library\opencv3\build\include\opencv2\core\persistence.hpp : warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
      1>c:\users\fumi0\source\repos\agz_automovecam2.02\library\opencv3\build\include\opencv2\core\utility.hpp : warning C4819: ファイルは、現在のコード ページ (932) で表示できない文字を含んでいます。データの損失を防ぐために、ファイルを Unicode 形式で保存してください。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(82): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(85): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(89): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(92): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(100): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(106): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(107): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(108): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(109): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(305): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(317): warning C4018: '<' : signed と unsigned の数値を比較しようとしました。
-     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\som.cpp(319): warning C4018: '<' : signed と unsigned の数値を比較しようとしました。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(48): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(53): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(58): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(63): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(122): warning C4018: '<' : signed と unsigned の数値を比較しようとしました。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(153): warning C4244: '引数' : 'float' から 'int' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(222): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(223): warning C4244: '=' : 'float' から 'int' への変換です。データが失われる可能性があります。
+     1>c:\users\fumi0\source\repos\agz_automovecam2.02\agz_automovecam_2.0\main.cpp(229): warning C4244: '引数' : 'int' から 'float' への変換です。データが失われる可能性があります。
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\fumi0\Source\Repos\agz_AutoMoveCam2.02\Debug\agz_AutoMoveCam_2.0.exe" /INCREMENTAL /NOLOGO opencv_ts300d.lib opencv_world300d.lib SSK.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\fumi0\Source\Repos\agz_AutoMoveCam2.02\Debug\agz_AutoMoveCam_2.0.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\fumi0\Source\Repos\agz_AutoMoveCam2.02\Debug\agz_AutoMoveCam_2.0.lib" /MACHINE:X86 Debug\Contorl.obj
          Debug\Img_Proc.obj
@@ -29,4 +26,4 @@
 
 ビルドに成功しました。
 
-経過時間 00:00:00.87
+経過時間 00:00:01.29
