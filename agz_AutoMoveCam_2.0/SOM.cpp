@@ -370,11 +370,11 @@ cv::Point2f SOM::calc_centerPoint(int n){
 	}
 	for (int i = 0; i < b.link.size(); i++){
 		for (int j = 0; j < c.link.size(); j++){
-			std::cout << "b: " << som[b.link[i]].id << " c:" << som[c.link[j]].id << std::endl;
+			//std::cout << "b: " << som[b.link[i]].id << " c:" << som[c.link[j]].id << std::endl;
 			if (som[b.link[i]].id == som[c.link[j]].id){
 				if (this->som[b.link[i]].id != me.id){
 					d = som[b.link[i]];
-					std::cout << "a:" << a.id << " b:" << b.id << " c:" << c.id << " d:" << d.id << std::endl;
+					//std::cout << "a:" << a.id << " b:" << b.id << " c:" << c.id << " d:" << d.id << std::endl;
 					flag = 1;
 					break;
 				}
@@ -384,31 +384,6 @@ cv::Point2f SOM::calc_centerPoint(int n){
 			break;
 		}
 	}
-
-
-
-
-
-	//cv::Point2f a, b, c, d, cp;
-	//SOM::Neuron me = this->som[n];
-	//int flag = 0;
-
-	//for (auto it : me.link){
-	//	for (auto it2 : me.link){
-	//		if (it != it2 && me.id < it && me.id < it2){
-	//			b = this->som[it].p;
-	//			c = this->som[it2].p;
-	//			for (it3)
-	//			d = it.p[];
-	//			std::cout << "a:" << a << " b:" << b << " c:" << c << " d:" << d << std::endl;
-	//			flag = 1;
-	//			break;
-	//		}
-	//	}
-	//	if (flag == 1){
-	//		break;
-	//	}
-	//}
 
 
 	cp.p = calc_weight(a.p, b.p, c.p, d.p);

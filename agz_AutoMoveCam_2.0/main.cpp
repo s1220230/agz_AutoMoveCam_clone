@@ -193,9 +193,10 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			//@comment 画像をリサイズ(大きすぎるとディスプレイに入りらないため)
 			//cv::resize(src, dst, cv::Size(sz.x, sz.y), CV_8UC3);
 			src.copyTo(copyImg);
-			src.copyTo(dst);
-			//warpPerspective(src, dst, imp.getPersMat(), cv::Size(sz.x, sz.y), CV_INTER_LINEAR);
-
+			//src.copyTo(dst);
+			cv::warpPerspective(src, dst, imp.getPersMat(), cv::Size(src.cols,src.rows), CV_INTER_LINEAR);
+			cv::imshow("perspective",dst);
+			cv::waitKey(0);
 			//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
 			//@comment hsvを利用して赤色を抽出
 			//入力画像、出力画像、変換、h最小値、h最大値、s最小値、s最大値、v最小値、v最大値 h:(0-180)実際の1/2
