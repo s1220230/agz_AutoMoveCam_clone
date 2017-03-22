@@ -38,6 +38,8 @@ public:
 	*/
 	void Init(cv::Mat &src);
 
+
+	void Init2(cv::Mat &src);
 	/**
 	* @fn
 	* ‰æ‘œ‚Ì‰Šú‰»‚ğs‚¤ŠÖ”
@@ -74,7 +76,7 @@ public:
 	*/
 	void calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin);
 
-
+	void calcsom2(int w,int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin); 
 
 	/**
 	* @fn

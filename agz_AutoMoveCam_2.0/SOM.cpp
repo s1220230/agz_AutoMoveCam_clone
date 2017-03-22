@@ -9,7 +9,8 @@ SOM::SOM(int width, int height, std::vector<cv::Point2f> &Pos, cv::UMat &src){
 	set_img(src);
 }
 
-void SOM::Init(cv::Mat &src){
+//透視投影変換前の画像に対して
+void SOM::Init(cv::Mat &src){ 
 	cv::Mat dst;
 	int calcNeuronNum; //近傍ニューロンの番号を取得
 	std::vector<Neuron> storeNeuron; //ニューロンの格納
@@ -50,6 +51,51 @@ void SOM::Init(cv::Mat &src){
 	std::cout << "fin" << std::endl;
 	cv::waitKey(1000); //プログラムの終了
 }
+
+//透視投影変換前の画像に対して
+void SOM::Init2(cv::Mat &src){
+	cv::Mat dst;
+	int calcNeuronNum; //近傍ニューロンの番号を取得
+	std::vector<Neuron> storeNeuron; //ニューロンの格納
+	for (int j = 0; j < height + 1; j++){
+		for (int i = 0; i < width + 1; i++){
+			Neuron neu; //ニューロン構造体
+			neu.id = j * (width + 1) + i;
+			neu.p = cv::Point2i((i % (width + 1)) * 20 + 200, 300 - (j % (height + 1) * 20)); //ニューロンの初期位置
+			for (int k = j - 1; k < j + 2; k++){
+				for (int l = i - 1; l < i + 2; l++){
+					calcNeuronNum = k * (width + 1) + l;
+
+					//4近傍の調査
+					if (k >= 0 && j - 1 == k && i == l){
+						neu.link.push_back(calcNeuronNum);
+					}
+					if (l <= height && j == k && i + 1 == l){
+						neu.link.push_back(calcNeuronNum);
+					}
+					if (k <= height && j + 1 == k && i == l){
+						neu.link.push_back(calcNeuronNum);
+					}
+					if (l >= 0 && j == k && i - 1 == l){
+						neu.link.push_back(calcNeuronNum);
+					}
+				}
+			}
+			storeNeuron.push_back(neu);
+		}
+	}
+	//格納されたニューロンを表示
+	for (auto it : storeNeuron){
+		std::cout << "id : " << it.id << " position : " << it.p << std::endl;
+	}
+	Imgproc(src, dst);
+	calcsom2(width, height, storeNeuron, dst, src); //somの計算
+	this->som = storeNeuron;
+	std::cout << "fin" << std::endl;
+	cv::waitKey(1000); //プログラムの終了
+}
+
+
 
 void SOM::InitImg(cv::Mat &img){
 	for (int i = 0; i < img.rows; i++){
@@ -171,6 +217,170 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 		if (t > 0 * max_t && t <0.60 * max_t || t > 0.70*max_t && t < 0.90 *max_t){
 			ind = rand()*rand() % random.size(); //randを２個かけて範囲を広げる
 			randP = random[ind];
+		}
+		else if (t > 0.96*max_t){
+			randP = this->P[rand() % this->P.size()];
+		}
+		else{
+			ind = rand() % random2.size(); //randを２個かけて範囲を広げる
+
+			randP = random2[ind];
+			std::cout << "ind : " << ind << "posi : " << randP << std::endl;
+		}
+
+		cv::circle(cpimg, randP, 4, cv::Scalar(255, 255, 255), -1, CV_AA); //入力値
+		for (auto it : som){
+			neuDist = abs(sqrt((it.p.x - randP.x)*(it.p.x - randP.x) + (it.p.y - randP.y)*(it.p.y - randP.y)));
+			if (neuDist < dist){
+				dist = neuDist;
+				res.x = randP.x - it.p.x;
+				res.y = randP.y - it.p.y;
+				index = count;
+			}
+			count++;
+		}
+		distM = 0; //マンハッタン距離
+
+		std::vector<int> ne;
+		std::vector<int> ne2;
+		std::vector<int> linked;
+		int lik = 0;
+
+		som[index].p.x = som[index].p.x + res.x * learncoeff / 6 * exp(-(distM*distM) / (2 * (learncoeff*learncoeff)));
+		som[index].p.y = som[index].p.y + res.y * learncoeff / 6 * exp(-(distM*distM) / (2 * (learncoeff*learncoeff)));
+		linked.push_back(index);
+		ne = som[index].link;
+		distM++;
+		int flag = 0;
+		int distFlag = 0;
+		float r = 0, max_r = 0;
+		cv::Point2i area;
+		while (1){
+
+			for (auto it : ne){
+				res.x = randP.x - som[it].p.x;
+				res.y = randP.y - som[it].p.y;
+
+				som[it].p.x = som[it].p.x + res.x * learncoeff / 6 * exp(-(distM*distM) / (2 * (learncoeff*learncoeff)));
+				som[it].p.y = som[it].p.y + res.y * learncoeff / 6 * exp(-(distM*distM) / (2 * (learncoeff*learncoeff)));
+
+				if (learncoeff / 6 * exp(-(distM*distM) / (2 * (learncoeff*learncoeff))) < 0.001){
+					if (distFlag == 0){
+						distFlag = 1;
+					}
+				}
+				if (distFlag == 1){
+					for (auto it : ne){
+						r = abs(sqrt((som[it].p.x - som[index].p.x)*(som[it].p.x - som[index].p.x)
+							+ (som[it].p.y - som[index].p.y)*(som[it].p.y - som[index].p.y)));
+						if (r > max_r){
+							max_r = r;
+						}
+					}
+					break;
+				}
+
+				for (auto it : ne){
+					linked.push_back(it);
+				}
+				std::sort(linked.begin(), linked.end(), cmp);
+				linked.erase(std::unique(linked.begin(), linked.end()), linked.end());
+
+				for (auto iit : som[it].link){
+					flag = 0;
+					for (auto i : linked){
+						if (iit == i){
+							flag = 1;
+						}
+					}
+					if (flag == 0){
+						ne2.push_back(iit);
+					}
+				}
+			}
+			std::sort(ne2.begin(), ne2.end(), cmp);
+			ne2.erase(std::unique(ne2.begin(), ne2.end()), ne2.end());
+
+			for (auto it : ne2){
+				linked.push_back(it);
+			}
+			std::sort(linked.begin(), linked.end(), cmp);
+			linked.erase(std::unique(linked.begin(), linked.end()), linked.end());
+
+			if (ne2.empty()) {
+				break;
+			}
+			distM++;
+			ne.clear();
+			for (auto it : ne2){
+				ne.push_back(it);
+			}
+			ne2.clear();
+		}
+		edgeline(som, cpimg);
+		for (auto it : som){
+			cv::circle(cpimg, it.p, 3, cv::Scalar(0, 0, 255), -1, CV_AA);
+		}
+
+		for (auto it : linked){
+			cv::circle(cpimg, som[it].p, 3, cv::Scalar(255, 0, 0), -1, CV_AA);
+		}
+		cv::circle(cpimg, som[index].p, 5, cv::Scalar(0, 255, 255), -1, CV_AA);
+		if (int(t) % 1000 == 0){
+
+			showSOM(index, linked, defo, t);
+			cv::imshow("s", cpimg);
+			//cv::imwrite(setImageName("Real_Imge", t), cpimg);
+			cv::waitKey(1);
+		}
+		t++;
+		index = 0;
+		count = 0;
+		distFlag = 0;
+	}
+	cv::imshow("s", cpimg);
+}
+
+void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
+	cv::namedWindow("s2", 1);
+	std::vector<Neuron> defo = som;
+	float t = 1;
+	static float max_t = 30000;
+	int index = 0;
+	int count = 0;
+	float dist = 0;
+	float neuDist = 0;
+	int distM = 0;
+	static cv::Mat cpimg;
+	static cv::Point2f randP;
+	float learncoeff = 0;
+	cv::Point2f res;
+	int ind = 0;
+	srand(2);
+
+	std::vector<cv::Point2f> random2 = storeBorderPoint();
+
+	cv::Point pt[10]; //任意の4点を配列に入れる
+	for (int i = 0; i < P.size(); i++){
+		pt[i] = P[i];
+	}
+
+	while (t < max_t){
+		image.copyTo(cpimg);
+		line(cpimg, pt[0], pt[1], cv::Scalar(255, 255, 0), 2, CV_AA);
+		line(cpimg, pt[1], pt[2], cv::Scalar(255, 255, 0), 2, CV_AA);
+		line(cpimg, pt[2], pt[3], cv::Scalar(255, 255, 0), 2, CV_AA);
+		line(cpimg, pt[3], pt[0], cv::Scalar(255, 255, 0), 2, CV_AA);
+
+		dist = 3000;
+		index = 0;
+		count = 0;
+		learncoeff = 1 - float(t / (max_t));
+
+		
+		if (t > 0 * max_t && t <0.60 * max_t || t > 0.70*max_t && t < 0.90 *max_t){
+
+			randP = cv::Point2f(rand() % src.cols, rand() % src.rows);
 		}
 		else if (t > 0.96*max_t){
 			randP = this->P[rand() % this->P.size()];

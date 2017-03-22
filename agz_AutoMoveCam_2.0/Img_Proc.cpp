@@ -195,15 +195,14 @@ cv::UMat Img_Proc::getFrame(){
 void Img_Proc::Perspective(cv::UMat &src,cv::UMat &dst, std::vector<cv::Point2f> &p){
 	cv::Point2f pts1[] = { p[0], p[1],p[2], p[3] };
 
-	cv::Point2f pts2[] = { cv::Point2f(0, field.y), cv::Point2f(0, 0),
-		cv::Point2f(field.x, 0), cv::Point2f(field.x, field.y) };
+	cv::Point2f pts2[] = { cv::Point2f(0, src.rows), cv::Point2f(0, 0),
+		cv::Point2f(src.cols, 0), cv::Point2f(src.cols, src.rows) };
 
 	//@comment 透視変換行列を計算
 	this->perspective_matrix = getPerspectiveTransform(pts1, pts2);
-	cv::UMat dst_img, colorExtra;
 
 	//@comment 変換(線形補完)
-	cv::warpPerspective(src, dst, this->perspective_matrix, cv::Size(field.x, field.y), CV_INTER_LINEAR);
+	cv::warpPerspective(src, dst, this->perspective_matrix, cv::Size(dst.cols, dst.rows), CV_INTER_LINEAR);
 
 	//@comment 変換前後の座標を描画
 	line(src, pts1[0], pts1[1], cv::Scalar(255, 0, 255), 2, CV_AA);

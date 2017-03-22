@@ -9,13 +9,14 @@
 #define CAM_ID 0	   //カメラID
 const LPCSTR com = "COM3";		//COMポート名
 std::vector<cv::Point2f> Pos;	//水田の四隅の点
+std::vector<cv::Point2f> Pos2;
 
 cv::Point2i target, P0[5] = { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } }, P1 = { 0, 0 };
 cv::Point2i pre_point; // @comment Point構造体<int型>
 int action;			   //ロボットの動作変数 1:前進 2:右旋回 4:左
 
 SOM s = SOM();
-
+SOM s2 = SOM();
 //データ出力用csvファイル　
 std::string setFilename(std::string str){
 	time_t now = time(NULL);
@@ -77,9 +78,9 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	cv::Mat field;
 	cv::UMat src_frame, dst_img;
 
-	cv::Mat sample_img = cv::imread("test2.JPG", 1);
-	if (!sample_img.data)exit(0);
-	cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15);
+	//cv::Mat sample_img = cv::imread("test2.JPG", 1);
+	//if (!sample_img.data)exit(0);
+	//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15);
 	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
 	std::cout << "横 : ";    std::cin >> width;
 	std::cout << "縦 : ";    std::cin >> height;
@@ -125,7 +126,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	s.set_size(width, height);
 	s.set_pos(Pos);
 	s.set_img(src_frame);
-	//cv::Mat ss = cv::Mat::ones(src_frame.size(),CV_8UC3);
+
 	cv::Mat_<cv::Vec3b> ss(src_frame.size());
 	for (int j = 0; j < src_frame.rows; j++){
 		for (int i = 0; i < src_frame.cols; i++){
@@ -141,6 +142,33 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 
 	//------------------透視変換-----------------------------------------------
 	imp.Perspective(src_frame, dst_img, Pos);
+
+	cv::imshow("wrap",dst_img);
+	
+
+	Pos2.push_back(cv::Point(0,dst_img.rows));
+	Pos2.push_back(cv::Point(0, 0));
+	Pos2.push_back(cv::Point(dst_img.cols, 0));
+	Pos2.push_back(cv::Point(dst_img.cols, dst_img.rows));
+
+	cv::Point pt2[10]; //任意の4点を配列に入れる
+	for (int i = 0; i < Pos2.size(); i++){
+		pt2[i] = Pos2[i];
+	}
+
+	s2.set_size(width,height);
+	s2.set_pos(Pos2);
+	s2.set_img(dst_img);
+	cv::Mat_<cv::Vec3b> ss2(dst_img.size());
+	for (int j = 0; j < dst_img.rows; j++){
+		for (int i = 0; i < dst_img.cols; i++){
+			ss2(j, i) = cv::Vec3b(255, 255, 255);
+		}
+	}
+	cv::fillConvexPoly(ss2, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
+	cv::imshow("ss2",ss2);
+	s2.Init2(ss2);
+
 }
 
 //制御ループ
@@ -148,10 +176,10 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 	cv::Mat element = cv::Mat::ones(3, 3, CV_8UC1); //2値画像膨張用行列
 	cv::Mat heatmap_img(cv::Size(500, 500), CV_8UC3, cv::Scalar(255, 255, 255));
 	int frameNum = 0;								//フレーム数保持変数
-	cv::UMat src, dst, colorExtra, pImg, binari_2, copyImg;
+	cv::UMat src, dst, colorExtra, pImg, binari_2, copyImg,copyImg2;
 	cv::Point2f sz = imp.getField();
 	Control control(sz.x, sz.y);
-	control.set_target(s);
+	control.set_target(s2);
 	char command = 's';
 	int ypos;
 	int ydef = 0;	//補正なし重心座標値
@@ -193,10 +221,12 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			//@comment 画像をリサイズ(大きすぎるとディスプレイに入りらないため)
 			//cv::resize(src, dst, cv::Size(sz.x, sz.y), CV_8UC3);
 			src.copyTo(copyImg);
+
 			//src.copyTo(dst);
 			cv::warpPerspective(src, dst, imp.getPersMat(), cv::Size(src.cols,src.rows), CV_INTER_LINEAR);
 			cv::imshow("perspective",dst);
-			cv::waitKey(0);
+			dst.copyTo(copyImg2);
+			//cv::waitKey(0);
 			//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
 			//@comment hsvを利用して赤色を抽出
 			//入力画像、出力画像、変換、h最小値、h最大値、s最小値、s最大値、v最小値、v最大値 h:(0-180)実際の1/2
@@ -260,6 +290,8 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			}
 			//std::cout << "cmd " << int(command) << std::endl;
 
+
+
 			//-------------------重心点のプロット----------------------------------------- 
 			if (!point.y == 0) { //@comment point.y == 0の場合はexceptionが起こる( 0除算 )
 				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
@@ -267,6 +299,11 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 				//@comment 重心点の移動履歴
 				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
 
+
+				circle(copyImg2, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
+				circle(copyImg2, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
+				//@comment 重心点の移動履歴
+				circle(copyImg2, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
 
 				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
 				circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
@@ -276,9 +313,11 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 
 			//------------------ターゲットのプロット--------------------------------------
 			control.plot_target(copyImg, P0[4]);
+			control.plot_target(copyImg2, P0[4]);
 
 			//------------------マス, 直進領域のプロット--------------------------------------
 			s.showSOM2(copyImg);
+			s2.showSOM2(copyImg2);
 			//imp.plot_field(dst,sz);
 
 			//---------------------表示部分----------------------------------------------
@@ -287,6 +326,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 
 			cv::imshow("dst_image", dst);//@comment 出力画像
 			cv::imshow("copyImg", copyImg);
+			cv::imshow("copyImg2", copyImg2);
 			//cv::imshow("colorExt", extra_img);//@comment 赤抽出画像
 			//cv::imshow("plot_img", pImg);
 

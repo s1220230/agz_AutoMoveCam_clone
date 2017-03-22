@@ -204,6 +204,7 @@ void Control::plot_target(cv::UMat &img, cv::Point2i Previous){
 	line(img, nowPoint, Previous, cv::Scalar(255, 0, 0), 2, CV_AA);
 
 	// 内外判定結果の表示
+
 	cv::putText(img, out, cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 1.0, CV_AA);
 
 	// ロボットの動作の表示
