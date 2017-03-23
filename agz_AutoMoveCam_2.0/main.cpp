@@ -143,9 +143,6 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	//------------------透視変換-----------------------------------------------
 	imp.Perspective(src_frame, dst_img, Pos);
 
-	cv::imshow("wrap",dst_img);
-	
-
 	Pos2.push_back(cv::Point(0,dst_img.rows));
 	Pos2.push_back(cv::Point(0, 0));
 	Pos2.push_back(cv::Point(dst_img.cols, 0));
@@ -166,9 +163,8 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 		}
 	}
 	cv::fillConvexPoly(ss2, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
-	cv::imshow("ss2",ss2);
 	s2.Init2(ss2);
-
+	cv::destroyAllWindows();
 }
 
 //制御ループ
@@ -224,7 +220,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 
 			//src.copyTo(dst);
 			cv::warpPerspective(src, dst, imp.getPersMat(), cv::Size(src.cols,src.rows), CV_INTER_LINEAR);
-			cv::imshow("perspective",dst);
+			//cv::imshow("perspective",dst);
 			dst.copyTo(copyImg2);
 			//cv::waitKey(0);
 			//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
@@ -235,7 +231,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			colorExtra.copyTo(pImg);
 			cv::cvtColor(colorExtra, colorExtra, CV_BGR2GRAY);//@comment グレースケールに変換
 
-
+		
 			//----------------------二値化-----------------------------------------------
 			cv::threshold(colorExtra, binari_2, 0, 255, CV_THRESH_BINARY);
 			cv::dilate(binari_2, binari_2, element, cv::Point(-1, -1), 3); //膨張処理3回 最後の引数で回数を設定
@@ -255,6 +251,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 				//std::cout << point.x << " " << ypos << std::endl; //@comment 変換画像中でのロボットの座標(重心)
 				ofs << point.x << ", " << ydef << ", " << ypos << std::endl; //@comment 変換
 			}
+
 			//---------------------ロボットの動作取得------------------------------------
 			//if (frame % 2 == 0){
 			P1 = cv::Point2f(point.x, sz.y - ydef);
@@ -288,45 +285,49 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			if (command == 'a'){
 				xbee.sentAigamoCommand(action, arduino);
 			}
-			//std::cout << "cmd " << int(command) << std::endl;
+			////std::cout << "cmd " << int(command) << std::endl;
+			cv::UMat test,test2;
+			src.copyTo(test);
+			dst.copyTo(test2);
 
+			cv::warpPerspective(test2, test, imp.getInvPerse(), cv::Size(test.cols,test.rows), CV_INTER_LINEAR);
 
 
 			//-------------------重心点のプロット----------------------------------------- 
 			if (!point.y == 0) { //@comment point.y == 0の場合はexceptionが起こる( 0除算 )
-				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-				circle(copyImg, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
+				//circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
+				//circle(copyImg, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
 				//@comment 重心点の移動履歴
-				circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
+				//circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
+				circle(copyImg, imp.calcHomoPoint(cv::Point2f(point)), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
 
 
-				circle(copyImg2, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-				circle(copyImg2, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
-				//@comment 重心点の移動履歴
-				circle(copyImg2, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
-
-				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-				circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
+				//circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
+				//circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
 				//@comment 重心点の移動履歴
 				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
 			}
 
 			//------------------ターゲットのプロット--------------------------------------
-			control.plot_target(copyImg, P0[4]);
-			control.plot_target(copyImg2, P0[4]);
+			control.plot_target(dst, P0[4]);
+
 
 			//------------------マス, 直進領域のプロット--------------------------------------
-			s.showSOM2(copyImg);
-			s2.showSOM2(copyImg2);
-			//imp.plot_field(dst,sz);
 
+			s2.showSOM3(dst);
+			s2.showSOM2(copyImg, imp.getInvPerse());
+			
 			//---------------------表示部分----------------------------------------------
 
 			//cv::resize(dst, dst, cv::Size(700, 700));
+		
+
 
 			cv::imshow("dst_image", dst);//@comment 出力画像
 			cv::imshow("copyImg", copyImg);
-			cv::imshow("copyImg2", copyImg2);
+			//cv::imshow("copyImg2", copyImg2);
+			//cv::imshow("test",test);
+			//cv::imshow("test2",test2);
 			//cv::imshow("colorExt", extra_img);//@comment 赤抽出画像
 			//cv::imshow("plot_img", pImg);
 

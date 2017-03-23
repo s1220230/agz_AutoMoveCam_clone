@@ -106,9 +106,13 @@ public:
 
 	void set_img(cv::UMat &src);
 
-	void showSOM2(cv::UMat &src);
+	void showSOM2(cv::UMat &src, cv::Mat &H);
 
 	cv::Point2f calc_weight(cv::Point2f a, cv::Point2f b, cv::Point2f c, cv::Point2f d);
+
+	std::vector<Neuron> get_SOM();
+
+	void showSOM3(cv::UMat &src);
 };
 
 

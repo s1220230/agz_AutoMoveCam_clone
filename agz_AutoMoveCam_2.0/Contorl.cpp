@@ -362,12 +362,12 @@ void Control::set_target(SOM som) {
 			// 左から右へターゲットを設定する
 			if (i % 2 == 0){
 				for (int j = 0; j < (width / 100); j++) {
-					std::cout << (width/100)*i+j << std::endl;
+
 					t.point = som.calc_centerPoint((width/100+1)*i+j);
 					t.n = num;
 					allTarget.push_back(t);
 					num++;
-					std::cout << t.point << " " << t.n << std::endl;
+
 				}
 			}
 			// 右から左へターゲットを設定する
@@ -377,11 +377,11 @@ void Control::set_target(SOM som) {
 					t.n = num;
 					allTarget.push_back(t);
 					num++;
-					std::cout << t.point << " " << t.n << std::endl;
+					
 				}
 			}
 
-			std::cout << t.point << " " << t.n << std::endl;
+		
 		}
 	}
 
