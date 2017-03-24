@@ -180,7 +180,7 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 	cv::namedWindow("s", 1);
 	std::vector<Neuron> defo = som;
 	float t = 1;
-	static float max_t = 5000;
+	static float max_t = 50000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -326,11 +326,11 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 			cv::circle(cpimg, som[it].p, 3, cv::Scalar(255, 0, 0), -1, CV_AA);
 		}
 		cv::circle(cpimg, som[index].p, 5, cv::Scalar(0, 255, 255), -1, CV_AA);
-		if (int(t) % 1000 == 0){
+		if (int(t) % 20 == 0){
 
 			showSOM(index, linked, defo, t);
 			cv::imshow("s", cpimg);
-			//cv::imwrite(setImageName("Real_Imge", t), cpimg);
+			cv::imwrite(setImageName("Real_Imge", t/20), cpimg);
 			cv::waitKey(1);
 		}
 		t++;
@@ -344,7 +344,7 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 	std::vector<Neuron> defo = som;
 	float t = 1;
-	static float max_t = 30000;
+	static float max_t = 35000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -489,11 +489,11 @@ void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat
 			cv::circle(cpimg, som[it].p, 3, cv::Scalar(255, 0, 0), -1, CV_AA);
 		}
 		cv::circle(cpimg, som[index].p, 5, cv::Scalar(0, 255, 255), -1, CV_AA);
-		if (int(t) % 1000 == 0){
+		if (int(t) % 20 == 0){
 
 			showSOM(index, linked, defo, t);
-			cv::imshow("s", cpimg);
-			//cv::imwrite(setImageName("Real_Imge", t), cpimg);
+			cv::imshow("s2", cpimg);
+			cv::imwrite(setImageName("Real_Imge_Perspective", t/20), cpimg);
 			cv::waitKey(1);
 		}
 		t++;

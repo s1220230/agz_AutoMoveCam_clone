@@ -214,7 +214,7 @@ void Img_Proc::Perspective(cv::UMat &src, cv::UMat &dst, std::vector<cv::Point2f
 	line(src, pts2[2], pts2[3], cv::Scalar(255, 255, 0), 2, CV_AA);
 	line(src, pts2[3], pts2[0], cv::Scalar(255, 255, 0), 2, CV_AA);
 
-	//cv::imshow("coo",dst);
+	//cv::imshow("coo",dst); //テスト用
 
 
 }

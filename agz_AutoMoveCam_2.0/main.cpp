@@ -78,9 +78,10 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	cv::Mat field;
 	cv::UMat src_frame, dst_img;
 
-	//cv::Mat sample_img = cv::imread("test2.JPG", 1);
-	//if (!sample_img.data)exit(0);
-	//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15);
+	//cv::Mat sample_img = cv::imread("test2.JPG", 1);            //テスト画像用（SOM）
+	cv::Mat sample_img = cv::imread("rice.jpg", 1);            //テスト画像用（SOM）
+	if (!sample_img.data)exit(0);								//テスト画像用（SOM）
+	cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
 	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
 	std::cout << "横 : ";    std::cin >> width;
 	std::cout << "縦 : ";    std::cin >> height;
@@ -104,7 +105,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	for (int i = 0; i < 10; i++) {
 		imp.getFrame().copyTo(src_frame);//@comment 1フレーム取得
 	}
-	//sample_img.copyTo(src_frame);
+	sample_img.copyTo(src_frame); //テスト画像用（SOM）
 	std::cout << "水田の4点をクリックしてください" << std::endl;
 
 	//------------------座標取得-----------------------------------------------
@@ -134,8 +135,8 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 		}
 	}
 	cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
-	//cv::imwrite("./image/Signal_area.png",ss);
-	//cv::imwrite("./image/Plot.png",field);
+	cv::imwrite("./image/Signal_area.png",ss);
+	cv::imwrite("./image/Plot.png",field);
 	//cv::fillConvexPoly(field, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
 	//cv::imwrite("./image/Field.png", field);
 	s.Init(ss);
@@ -310,7 +311,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 
 			//------------------ターゲットのプロット--------------------------------------
 			control.plot_target(dst, P0[4]);
-
+			control.plot_transform_target(copyImg,P0[4],imp.getInvPerse());
 
 			//------------------マス, 直進領域のプロット--------------------------------------
 
