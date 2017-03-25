@@ -326,7 +326,7 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 			cv::circle(cpimg, som[it].p, 3, cv::Scalar(255, 0, 0), -1, CV_AA);
 		}
 		cv::circle(cpimg, som[index].p, 5, cv::Scalar(0, 255, 255), -1, CV_AA);
-		if (int(t) % 20 == 0){
+		if (int(t) % 1000 == 0){
 
 			showSOM(index, linked, defo, t);
 			cv::imshow("s", cpimg);
@@ -379,7 +379,7 @@ void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat
 		
 		if (t > 0 * max_t && t <0.60 * max_t || t > 0.70*max_t && t < 0.90 *max_t){
 
-			randP = cv::Point2f(rand() % src.cols, rand() % src.rows);
+		randP = cv::Point2f(rand() % src.cols, rand() % src.rows);
 		}
 		else if (t > 0.96*max_t){
 			randP = this->P[rand() % this->P.size()];
@@ -489,7 +489,7 @@ void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat
 			cv::circle(cpimg, som[it].p, 3, cv::Scalar(255, 0, 0), -1, CV_AA);
 		}
 		cv::circle(cpimg, som[index].p, 5, cv::Scalar(0, 255, 255), -1, CV_AA);
-		if (int(t) % 20 == 0){
+		if (int(t) % 1000 == 0){
 
 			showSOM(index, linked, defo, t);
 			cv::imshow("s2", cpimg);

@@ -265,50 +265,50 @@ cv::Point2f Img_Proc::calcHomoPoint(cv::Point2f &p){
 }
 
 
-
-cv::Mat Img_Proc::calcHomo(cv::UMat &img, cv::UMat &img2){
-	cv::Mat s;
-	cv::Mat discriptors1, discriptors2;
-	img.copyTo(s);
-	std::vector<cv::KeyPoint> keypoint1, keypoint2;
-	auto orb = cv::ORB::create();
-	cv::xfeatures2d::SIFT detector;
-	orb->detectAndCompute(img, cv::noArray(), keypoint1, discriptors1);
-	orb->detectAndCompute(img2, cv::noArray(), keypoint2, discriptors2);
-	//マッチングを取る
-	std::vector<cv::DMatch> matches;
-	cv::BFMatcher matcher(cv::NORM_HAMMING, true);
-	matcher.match(discriptors1, discriptors2, matches);
-
-	//良好なマッチングのみを選ぶ
-	std::vector<cv::DMatch> good_matches;
-	std::vector<cv::KeyPoint> good_keypoints1, good_keypoints2;
-
-	for (int i = 0; i < matches.size(); i++){
-		if (matches[i].distance < 25){
-			good_matches.push_back(matches[i]);
-			good_keypoints1.push_back(keypoint1[matches[i].queryIdx]);
-			good_keypoints2.push_back(keypoint2[matches[i].trainIdx]);
-		}
-	}
-
-	//マッチを表示する
-	cv::Mat image_matches;
-	cv::drawMatches(img, keypoint1, img2, keypoint2, good_matches, image_matches);
-	imshow("マッチング結果", image_matches);
-
-	std::vector<cv::Point2f> good_points2f1, good_points2f2;
-	cv::KeyPoint::convert(good_keypoints1, good_points2f1);
-	cv::KeyPoint::convert(good_keypoints2, good_points2f2);
-
-	//ホモグラフィー行列を求める
-	cv::Mat H = cv::findHomography(good_points2f1, good_points2f2);
-	return H;
-}
-
-void Img_Proc::setH(cv::Mat H){
-	this->Homo = H;
-}
+//
+//cv::Mat Img_Proc::calcHomo(cv::UMat &img, cv::UMat &img2){
+//	cv::Mat s;
+//	cv::Mat discriptors1, discriptors2;
+//	img.copyTo(s);
+//	std::vector<cv::KeyPoint> keypoint1, keypoint2;
+//	auto orb = cv::ORB::create();
+//	cv::xfeatures2d::SIFT detector;
+//	orb->detectAndCompute(img, cv::noArray(), keypoint1, discriptors1);
+//	orb->detectAndCompute(img2, cv::noArray(), keypoint2, discriptors2);
+//	//マッチングを取る
+//	std::vector<cv::DMatch> matches;
+//	cv::BFMatcher matcher(cv::NORM_HAMMING, true);
+//	matcher.match(discriptors1, discriptors2, matches);
+//
+//	//良好なマッチングのみを選ぶ
+//	std::vector<cv::DMatch> good_matches;
+//	std::vector<cv::KeyPoint> good_keypoints1, good_keypoints2;
+//
+//	for (int i = 0; i < matches.size(); i++){
+//		if (matches[i].distance < 25){
+//			good_matches.push_back(matches[i]);
+//			good_keypoints1.push_back(keypoint1[matches[i].queryIdx]);
+//			good_keypoints2.push_back(keypoint2[matches[i].trainIdx]);
+//		}
+//	}
+//
+//	//マッチを表示する
+//	cv::Mat image_matches;
+//	cv::drawMatches(img, keypoint1, img2, keypoint2, good_matches, image_matches);
+//	imshow("マッチング結果", image_matches);
+//
+//	std::vector<cv::Point2f> good_points2f1, good_points2f2;
+//	cv::KeyPoint::convert(good_keypoints1, good_points2f1);
+//	cv::KeyPoint::convert(good_keypoints2, good_points2f2);
+//
+//	//ホモグラフィー行列を求める
+//	cv::Mat H = cv::findHomography(good_points2f1, good_points2f2);
+//	return H;
+//}
+//
+//void Img_Proc::setH(cv::Mat H){
+//	this->Homo = H;
+//}
 //
 //void Img_Proc::perseSOM(cv::UMat &img, SOM som){
 //	//cv::Point2f point;

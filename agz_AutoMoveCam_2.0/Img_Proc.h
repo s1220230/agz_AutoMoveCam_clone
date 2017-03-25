@@ -2,8 +2,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/xfeatures2d/nonfree.hpp>
+//#include <opencv2/features2d/features2d.hpp>
+//#include <opencv2/xfeatures2d/nonfree.hpp>
 //#include "SOM.h"
 
 class Img_Proc
