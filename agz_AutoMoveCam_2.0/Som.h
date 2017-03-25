@@ -10,6 +10,8 @@ class SOM{
 private:
 	int width,height;
 	cv::UMat image;
+	std::vector<cv::Point2f> P;
+
 	/* 構造体 Neuron を定義 */
 	typedef struct {
 		int id;					/*ニューロンID*/
@@ -18,8 +20,12 @@ private:
 		cv::Point2f weight;		/*ニューロンの荷重*/
 	} Neuron;
 
+
+	std::vector<Neuron> som;
+
 public:
-	SOM(int width, int height, cv::UMat &src);
+	SOM();
+	SOM(int width, int height, std::vector<cv::Point2f> &Pos , cv::UMat &src);
 	/**
 	* @fn
 	* SOM(自己組織化マップ)の生成を行う関数
@@ -32,6 +38,8 @@ public:
 	*/
 	void Init(cv::Mat &src);
 
+
+	void Init2(cv::Mat &src);
 	/**
 	* @fn
 	* 画像の初期化を行う関数
@@ -66,9 +74,9 @@ public:
 	* @sa     -
 	* @detail -
 	*/
-	void som(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin);
+	void calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin);
 
-
+	void calcsom2(int w,int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin); 
 
 	/**
 	* @fn
@@ -80,12 +88,33 @@ public:
 	* @sa     -
 	* @detail -
 	*/
-	void showSOM(int index, std::vector<Neuron> &def);
+	void showSOM(int index,std::vector<int> &linked, std::vector<Neuron> &def, int time);
 
 	void Imgproc(cv::Mat &src, cv::Mat &dst);
 
 	std::vector<cv::Point2f> storePoint(cv::Mat &img);
+
+	std::vector<cv::Point2f> storeBorderPoint();
+
+	std::string setImageName(std::string str, int time);
+
+	cv::Point2f calc_centerPoint(int id);
+
+	void set_size(int width, int height);
+
+	void set_pos(std::vector<cv::Point2f> &Pos);
+
+	void set_img(cv::UMat &src);
+
+	void showSOM2(cv::UMat &src, cv::Mat &H);
+
+	cv::Point2f calc_weight(cv::Point2f a, cv::Point2f b, cv::Point2f c, cv::Point2f d);
+
+	std::vector<Neuron> get_SOM();
+
+	void showSOM3(cv::UMat &src);
 };
 
 
 bool cmp(int A, int B);
+

@@ -1,6 +1,6 @@
 #include "Control.h"
 
-#define PROGRAM 1
+#define PROGRAM 2
 
 
 
@@ -39,7 +39,7 @@ bool Control::is_updateTarget(void){
 
 	bool result = false;
 
-	if (PROGRAM == 0){
+	if (PROGRAM == 0 || PROGRAM == 2){
 		int dx = nowPoint.x - nowTarget_itr->point.x;
 		int dy = nowPoint.y - nowTarget_itr->point.y;
 		double d = sqrt(dx * dx + dy * dy);
@@ -171,10 +171,10 @@ void Control::is_out(void){
 	c3 = DC.cross(DP);
 	c4 = DP.cross(DA);
 
-	if ((c1 >= 0 && c2 >= 0) || (c1 < 0 && c2 < 0)) {
+	if (c1 < 0 && c2 < 0) {
 		flag1 = true;
 	}
-	if ((c3 >= 0 && c4 >= 0) || (c3 < 0 && c4 < 0)) {
+	if (c3 < 0 && c4 < 0) {
 		flag2 = true;
 	}
 	if (flag1 && flag2) {
@@ -194,22 +194,79 @@ void Control::plot_target(cv::UMat &img, cv::Point2i Previous){
 	// すべてのターゲットのプロット（水色）
 	for (std::vector<target>::iterator itr = allTarget.begin(); itr != allTarget.end(); itr++) {
 
-		cv::circle(img, cv::Point(itr->point), 28, cv::Scalar(255, 255, 0), 3, 4);
+		cv::circle(img, cv::Point(itr->point), 20, cv::Scalar(255, 255, 0), 3, 4);
 		cv::putText(img, std::to_string(itr->n), cv::Point(itr->point), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 0.5, CV_AA);
 	}
 
 	// 現在向かうべきターゲットのプロット（黒）
-	cv::circle(img, cv::Point(nowTarget_itr->point), 28, cv::Scalar(0, 0, 0), 3, 4);
+	cv::circle(img, cv::Point(nowTarget_itr->point), 20, cv::Scalar(0, 0, 0), 3, 4);
 
 	line(img, nowPoint, Previous, cv::Scalar(255, 0, 0), 2, CV_AA);
 
 	// 内外判定結果の表示
+
 	cv::putText(img, out, cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 1.0, CV_AA);
 
 	// ロボットの動作の表示
 	cv::putText(img, action, cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 1.0, CV_AA);
 
 
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+//
+//	plot_trans_target
+//	
+//	ターゲットとロボットの状態をプロットする.
+////////////////////////////////////////////////////////////////////////////////
+
+void Control::plot_transform_target(cv::UMat &img, cv::Point2i Previous, cv::Mat H){
+	std::vector<target> t = allTarget;
+	double a = H.at<double>(0, 0);
+	double b = H.at<double>(0, 1);
+	double c = H.at<double>(0, 2);
+	double d = H.at<double>(1, 0);
+	double e = H.at<double>(1, 1);
+	double f = H.at<double>(1, 2);
+	double g = H.at<double>(2, 0);
+	double h = H.at<double>(2, 1);
+	double i = H.at<double>(2, 2);
+
+
+	for (int j = 0; j < t.size(); j++){
+		cv::Point2f temp = t[j].point;
+		t[j].point.x = (temp.x * a + temp.y * b + c) / float(temp.x * g + temp.y * h + i);
+		t[j].point.y = (temp.x * d + temp.y * e + f) / float(temp.x * g + temp.y * h + i);
+		if (nowTarget_itr->n != t[j].n){
+			cv::circle(img, t[j].point, 20, cv::Scalar(255, 255, 0), 3, 4);
+		}
+		cv::putText(img, std::to_string(t[j].n), cv::Point(t[j].point), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 0), 0.5, CV_AA);
+	}
+
+
+	// 現在向かうべきターゲットのプロット（黒）
+	cv::Point2f temp = nowTarget_itr->point;
+	cv::Point2f target, pre, now;
+	target.x = (temp.x * a + temp.y * b + c) / float(temp.x * g + temp.y * h + i);
+	target.y = (temp.x * d + temp.y * e + f) / float(temp.x * g + temp.y * h + i);
+	cv::circle(img, target, 20, cv::Scalar(0, 0, 0), 3, 4);
+
+	temp = Previous;
+	pre.x = (temp.x * a + temp.y * b + c) / float(temp.x * g + temp.y * h + i);
+	pre.y = (temp.x * d + temp.y * e + f) / float(temp.x * g + temp.y * h + i);
+
+	temp = nowPoint;
+	now.x = (temp.x * a + temp.y * b + c) / float(temp.x * g + temp.y * h + i);
+	now.y = (temp.x * d + temp.y * e + f) / float(temp.x * g + temp.y * h + i);
+	line(img, now, pre, cv::Scalar(255, 0, 0), 2, CV_AA);
+
+	// 内外判定結果の表示
+
+	cv::putText(img, out, cv::Point(10, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 1.0, CV_AA);
+
+	// ロボットの動作の表示
+	cv::putText(img, action, cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 1.0, CV_AA);
 
 }
 
@@ -295,9 +352,7 @@ void Control::heatmap(cv::Point2i pos, cv::Mat *img, cv::Mat *bar){
 		}
 	}
 
-	//cv::resize(*img, *img, cv::Size(500, 500));
 	vconcat(*bar, *img, concat_img);
-	//cv::putText(concat_img, "1", cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1.0, CV_AA);
 
 	int value = max_count / 5;
 	for (int i = 0; i < 5; i++){
@@ -313,7 +368,7 @@ void Control::heatmap(cv::Point2i pos, cv::Mat *img, cv::Mat *bar){
 //
 ////////////////////////////////////////////////
 
-void Control::set_target(void) {
+void Control::set_target(SOM som) {
 	target t;
 
 	allTarget.clear();
@@ -355,6 +410,34 @@ void Control::set_target(void) {
 			t.n = num;
 			allTarget.push_back(t);
 			num++;
+		}
+	}
+
+	if (PROGRAM == 2){
+		for (int i = 0; i < (height / 100); i++) {
+			// 左から右へターゲットを設定する
+			if (i % 2 == 0){
+				for (int j = 0; j < (width / 100); j++) {
+
+					t.point = som.calc_centerPoint((width / 100 + 1)*i + j);
+					t.n = num;
+					allTarget.push_back(t);
+					num++;
+
+				}
+			}
+			// 右から左へターゲットを設定する
+			else {
+				for (int j = (width / 100) - 1; j >= 0; j--) {
+					t.point = som.calc_centerPoint((width / 100 + 1)*i + j);
+					t.n = num;
+					allTarget.push_back(t);
+					num++;
+
+				}
+			}
+
+
 		}
 	}
 
