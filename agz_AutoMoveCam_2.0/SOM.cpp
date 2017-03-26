@@ -41,10 +41,7 @@ void SOM::Init(cv::Mat &src){
 			storeNeuron.push_back(neu);
 		}
 	}
-	//äiî[Ç≥ÇÍÇΩÉjÉÖÅ[ÉçÉìÇï\é¶
-	//for (auto it : storeNeuron){
-	//	//std::cout << "id : " << it.id << " position : " << it.p << std::endl;
-	//}
+
 	Imgproc(src, dst);
 	calcsom(width, height, storeNeuron, dst, src); //somÇÃåvéZ
 	this->som = storeNeuron;
@@ -84,12 +81,9 @@ void SOM::Init2(cv::Mat &src){
 			storeNeuron.push_back(neu);
 		}
 	}
-	//äiî[Ç≥ÇÍÇΩÉjÉÖÅ[ÉçÉìÇï\é¶
-	//for (auto it : storeNeuron){
-	//	//std::cout << "id : " << it.id << " position : " << it.p << std::endl;
-	//}
+
 	Imgproc(src, dst);
-	calcsom2(width, height, storeNeuron, dst, src); //somÇÃåvéZ
+	calcsom(width, height, storeNeuron, dst, src); //somÇÃåvéZ
 	this->som = storeNeuron;
 	std::cout << "fin" << std::endl;
 	cv::waitKey(1000); //ÉvÉçÉOÉâÉÄÇÃèIóπ
@@ -180,7 +174,8 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 	cv::namedWindow("s", 1);
 	std::vector<Neuron> defo = som;
 	float t = 1;
-	static float max_t = 50000;
+	//static float max_t = 35000;
+	static float max_t = 5000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -195,8 +190,6 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 
 	std::vector<cv::Point2f> random = storePoint(src);
 	std::vector<cv::Point2f> random2 = storeBorderPoint();
-	//std::cout << random.size() << std::endl;
-	//std::cout << random2.size() << std::endl;
 	cv::Point pt[10]; //îCà”ÇÃ4ì_ÇîzóÒÇ…ì¸ÇÍÇÈ
 	for (int i = 0; i < P.size(); i++){
 		pt[i] = P[i];
@@ -214,18 +207,17 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 		index = 0;
 		count = 0;
 		learncoeff = 1 - float(t / (max_t));
-		if (t > 0 * max_t && t <0.60 * max_t || t > 0.70*max_t && t < 0.90 *max_t){
+		if (t > 0 * max_t && t <0.60 * max_t || t > 0.70*max_t && t < 0.88 *max_t){
 			ind = rand()*rand() % random.size(); //randÇÇQå¬Ç©ÇØÇƒîÕàÕÇçLÇ∞ÇÈ
 			randP = random[ind];
 		}
-		else if (t > 0.96*max_t){
+		else if (t > 0.95*max_t){
 			randP = this->P[rand() % this->P.size()];
 		}
 		else{
 			ind = rand() % random2.size(); //randÇÇQå¬Ç©ÇØÇƒîÕàÕÇçLÇ∞ÇÈ
 
 			randP = random2[ind];
-			//std::cout << "ind : " << ind << "posi : " << randP << std::endl;
 		}
 
 		cv::circle(cpimg, randP, 4, cv::Scalar(255, 255, 255), -1, CV_AA); //ì¸óÕíl
@@ -330,7 +322,7 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 
 			showSOM(index, linked, defo, t);
 			cv::imshow("s", cpimg);
-			cv::imwrite(setImageName("Real_Imge", t/20), cpimg);
+			//cv::imwrite(setImageName("Real_Imge", t/20), cpimg);
 			cv::waitKey(1);
 		}
 		t++;
@@ -344,7 +336,8 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
 	std::vector<Neuron> defo = som;
 	float t = 1;
-	static float max_t = 35000;
+	/*static float max_t = 35000;*/
+	static float max_t = 5000;
 	int index = 0;
 	int count = 0;
 	float dist = 0;
@@ -563,17 +556,20 @@ std::string SOM::setImageName(std::string str, int time){
 	return data + str + fcount; //@comment ÉtÉ@ÉCÉãñº
 }
 
-cv::Point2f SOM::calc_centerPoint(int n){
+cv::Point2f SOM::calc_centerPoint(int n, std::vector<int> &nei){
 //n = 0;
 	SOM::Neuron a, b, c, d, cp;
 	SOM::Neuron me = this->som[n];
 	int flag = 0;
 
 	a = me;
+	nei.push_back(a.id);
 	for (int i = 0; i < me.link.size(); i++){
 		if (this->som[me.link[i]].id > me.id && i+1 < me.link.size()){
 			b = this->som[me.link[i]];
 			c = this->som[me.link[i+1]];
+			nei.push_back(b.id);
+			nei.push_back(c.id);
 			break;
 		}
 	}
@@ -583,6 +579,7 @@ cv::Point2f SOM::calc_centerPoint(int n){
 			if (som[b.link[i]].id == som[c.link[j]].id){
 				if (this->som[b.link[i]].id != me.id){
 					d = som[b.link[i]];
+					nei.push_back(d.id);
 					//std::cout << "a:" << a.id << " b:" << b.id << " c:" << c.id << " d:" << d.id << std::endl;
 					flag = 1;
 					break;
@@ -625,7 +622,7 @@ void SOM::set_img(cv::UMat &src){
 
 }
 
-void SOM::showSOM2(cv::UMat &src, cv::Mat &H){
+void SOM::showSOM2(cv::UMat &src, cv::Mat &H, std::vector<int> &v){
 cv::Mat im;
 std::vector<Neuron> S = this->som;
 	double a = H.at<double>(0, 0);
@@ -652,9 +649,19 @@ std::vector<Neuron> S = this->som;
 	for (auto it : S){
 		cv::circle(src, it.p, 3, cv::Scalar(0, 0, 255), -1, CV_AA);
 	}
+
+	line(src, S[v[0]].p, S[v[2]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, S[v[2]].p, S[v[3]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, S[v[1]].p, S[v[3]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, S[v[1]].p, S[v[0]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+
+	for (auto it : v){
+		cv::circle(src, S[it].p, 4, cv::Scalar(0, 255, 255), -1, CV_AA);
+	}
+
 }
 
-void SOM::showSOM3(cv::UMat &src){
+void SOM::showSOM3(cv::UMat &src, std::vector<int> &v){
 
 	for (auto it : this->som){
 		for (auto nei : it.link)
@@ -663,6 +670,9 @@ void SOM::showSOM3(cv::UMat &src){
 	for (auto it : this->som){
 		cv::circle(src, it.p, 3, cv::Scalar(0, 0, 255), -1, CV_AA);
 	}
+
+	plotNowTargetArea(src,v);
+
 }
 
 cv::Point2f SOM::calc_weight(cv::Point2f a, cv::Point2f b, cv::Point2f c, cv::Point2f d){
@@ -679,4 +689,19 @@ cv::Point2f SOM::calc_weight(cv::Point2f a, cv::Point2f b, cv::Point2f c, cv::Po
 
 std::vector<SOM::Neuron> SOM::get_SOM(){
 	return this->som;
+}
+
+
+void SOM::plotNowTargetArea(cv::UMat src, std::vector<int> &v){
+
+
+
+	line(src, som[v[0]].p, som[v[2]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, som[v[2]].p, som[v[3]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, som[v[1]].p, som[v[3]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+	line(src, som[v[1]].p, som[v[0]].p, cv::Scalar(255, 0, 255), 2, CV_AA);
+
+	for (auto it : v){
+		cv::circle(src, som[it].p, 4, cv::Scalar(0, 255, 255), -1, CV_AA);
+	}
 }

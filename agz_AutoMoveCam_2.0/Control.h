@@ -22,6 +22,7 @@ private:
 		cv::Point2i point;
 		// ターゲット番号
 		int n;
+		std::vector<int> neighbor;
 	};
 
 	// すべてのターゲット
@@ -74,4 +75,6 @@ public:
 
 	// get function
 	int get_target(void);
+
+	std::vector<int> get_nowTargetArea(void);
 };
