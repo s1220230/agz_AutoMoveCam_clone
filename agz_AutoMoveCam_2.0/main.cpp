@@ -17,7 +17,14 @@ int action;			   //ロボットの動作変数 1:前進 2:右旋回 4:左
 
 SOM s = SOM();
 SOM s2 = SOM();
-//データ出力用csvファイル　
+
+//cv::Mat sample_img = cv::imread("test2.JPG", 1);            //テスト画像用（SOM）
+//cv::Mat sample_img = cv::imread("rice.jpg", 1);            //テスト画像用（SOM）
+//if (!sample_img.data)exit(0);								//テスト画像用（SOM）
+//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
+
+
+//データ出力用csvファイル名作成関数　
 std::string setFilename(std::string str){
 	time_t now = time(NULL);
 	struct tm * pnow = localtime(&now);
@@ -32,7 +39,7 @@ std::string setFilename(std::string str){
 	return data + str + time + c; //@comment ファイル名
 }
 
-//取得座標位置に円をプロット
+//マウスクリック取得座標位置に円をプロット
 void drawPoint(cv::Mat* img, cv::Point2i point){
 	cv::circle(*img, point, 8, cv::Scalar(0, 255, 0), -1, CV_AA);
 	cv::imshow("getCoordinates", *img);
@@ -45,32 +52,30 @@ void getCoordinates(int event, int x, int y, int flags, void* param)
 	static int count = 0;
 	switch (event) {
 	case CV_EVENT_LBUTTONDOWN://@comment 左クリックが押された時
-		if (count == 0) {
-			Pos.push_back(cv::Point2f(x, y));
-			drawPoint(image, cv::Point2i(x, y));
-			std::cout << "Ax :" << x << ", Ay: " << y << std::endl;
+		Pos.push_back(cv::Point2f(x, y));
+		drawPoint(image, cv::Point2i(x, y));
+		std::cout << ++count << " : " << "x : " << x << ", y : " << y << std::endl;
+		if (count > 3){
+			cv::imshow("getCoordinates", *image);
+			cv::waitKey(200);
+			cv::destroyAllWindows();
+			break;
 		}
-		else if (count == 1) {
-			Pos.push_back(cv::Point2f(x, y));
-			drawPoint(image, cv::Point2i(x, y));
-			std::cout << "Bx :" << x << ", By: " << y << std::endl;
+		break;
+	case CV_EVENT_RBUTTONDOWN:
+		//4点以上クリックされない場合画像の内側の4点を指定
+		if (count < 4){
+
+			std::cout << std::endl;
+			std::cout << "4点以上指定してください" << std::endl<<std::endl;
+			system("pause");
+			exit(0);
 		}
-		else if (count == 2) {
-			Pos.push_back(cv::Point2f(x, y));
-			drawPoint(image, cv::Point2i(x, y));
-			std::cout << "Cx :" << x << ", Cy: " << y << std::endl;
-		}
-		else if (count == 3) {
-			Pos.push_back(cv::Point2f(x, y));
-			drawPoint(image, cv::Point2i(x, y));
-			std::cout << "Dx :" << x << ", Dy: " << y << std::endl;
-		}
-		else {
-		}
-		count++;
+		cv::destroyAllWindows();
 		break;
 	}
 }
+
 
 //画像を取得し,水田領域を設定
 void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
@@ -78,10 +83,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	cv::Mat field;
 	cv::UMat src_frame, dst_img;
 
-	//cv::Mat sample_img = cv::imread("test2.JPG", 1);            //テスト画像用（SOM）
-	cv::Mat sample_img = cv::imread("rice.jpg", 1);            //テスト画像用（SOM）
-	if (!sample_img.data)exit(0);								//テスト画像用（SOM）
-	cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
+
 	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
 	std::cout << "横 : ";    std::cin >> width;
 	std::cout << "縦 : ";    std::cin >> height;
@@ -101,60 +103,40 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	nm30_init();
 	nm30_set_panorama_mode(1, 11); //@comment 魚眼補正
 
-	//@comment 始めの方のフレームは暗い可能性があるので読み飛ばす
+	//@comment 始めの１０フレームは読み飛ばす
 	for (int i = 0; i < 10; i++) {
 		imp.getFrame().copyTo(src_frame);//@comment 1フレーム取得
 	}
-	sample_img.copyTo(src_frame); //テスト画像用（SOM）
-	std::cout << "水田の4点をクリックしてください" << std::endl;
+	//if (!sample_img.data)exit(0);								//テスト画像用（SOM）
+	//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
+	//sample_img.copyTo(src_frame); //テスト画像用（SOM）
+	std::cout << "水田の領域をクリックしてください４点 " << std::endl;
 
 	//------------------座標取得-----------------------------------------------
-	//画像中からマウスで4点を取得その後ESCキーを押すと変換処理が開始する
+	//画像中からマウスで4 ~ 10点を取得その後右クリックすると変換処理が開始する
 	cv::namedWindow("getCoordinates");
 	cv::imshow("getCoordinates", src_frame);
-	//変換したい領域の四隅の座標を取得(クリック)
 	src_frame.copyTo(field);
 	cv::setMouseCallback("getCoordinates", getCoordinates, (void *)&field);
 
 	cv::waitKey(0);
 	cv::destroyAllWindows();
 
-
-	cv::Point pt[10]; //任意の4点を配列に入れる
-	for (int i = 0; i < Pos.size(); i++){
-		pt[i] = Pos[i];
-	}
-	s.set_size(width, height);
-	s.set_pos(Pos);
-	s.set_img(src_frame);
-
-	cv::Mat_<cv::Vec3b> ss(src_frame.size());
-	for (int j = 0; j < src_frame.rows; j++){
-		for (int i = 0; i < src_frame.cols; i++){
-			ss(j, i) = cv::Vec3b(255, 255, 255);
-		}
-	}
-	cv::fillConvexPoly(ss, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
-	cv::imwrite("./image/Signal_area.png",ss);
-	cv::imwrite("./image/Plot.png",field);
-	//cv::fillConvexPoly(field, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
-	//cv::imwrite("./image/Field.png", field);
-	s.Init(ss);
-
 	//------------------透視変換-----------------------------------------------
+
 	imp.Perspective(src_frame, dst_img, Pos);
 
-	Pos2.push_back(cv::Point(0,dst_img.rows));
-	Pos2.push_back(cv::Point(0, 0));
-	Pos2.push_back(cv::Point(dst_img.cols, 0));
-	Pos2.push_back(cv::Point(dst_img.cols, dst_img.rows));
+	Pos2.push_back(cv::Point(30, dst_img.rows - 30));
+	Pos2.push_back(cv::Point(30, 30));
+	Pos2.push_back(cv::Point(dst_img.cols - 30, 30));
+	Pos2.push_back(cv::Point(dst_img.cols - 30, dst_img.rows - 30));
 
 	cv::Point pt2[10]; //任意の4点を配列に入れる
 	for (int i = 0; i < Pos2.size(); i++){
 		pt2[i] = Pos2[i];
 	}
 
-	s2.set_size(width,height);
+	s2.set_size(width, height);
 	s2.set_pos(Pos2);
 	s2.set_img(dst_img);
 	cv::Mat_<cv::Vec3b> ss2(dst_img.size());
@@ -163,7 +145,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 			ss2(j, i) = cv::Vec3b(255, 255, 255);
 		}
 	}
-	cv::fillConvexPoly(ss2, pt, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
+	cv::fillConvexPoly(ss2, pt2, Pos.size(), cv::Scalar(200, 200, 200));//多角形を描画
 	s2.Init2(ss2);
 	cv::destroyAllWindows();
 }
@@ -173,7 +155,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 	cv::Mat element = cv::Mat::ones(3, 3, CV_8UC1); //2値画像膨張用行列
 	cv::Mat heatmap_img(cv::Size(500, 500), CV_8UC3, cv::Scalar(255, 255, 255));
 	int frameNum = 0;								//フレーム数保持変数
-	cv::UMat src, dst, colorExtra, pImg, binari_2, copyImg,copyImg2;
+	cv::UMat src, dst, colorExtra, pImg, binari_2, copyImg, copyImg2;
 	cv::Point2f sz = imp.getField();
 	Control control(sz.x, sz.y);
 	control.set_target(s2);
@@ -199,6 +181,8 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 
 	while (1){
 		imp.getFrame().copyTo(src);
+		//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
+		//sample_img.copyTo(src); //テスト画像用（SOM）
 		if (frameNum % 1 == 0){
 			if (_kbhit()){
 				command = _getch();
@@ -216,15 +200,10 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 				}
 			}
 			//@comment 画像をリサイズ(大きすぎるとディスプレイに入りらないため)
-			//cv::resize(src, dst, cv::Size(sz.x, sz.y), CV_8UC3);
 			src.copyTo(copyImg);
-
-			//src.copyTo(dst);
-			cv::warpPerspective(src, dst, imp.getPersMat(), cv::Size(src.cols,src.rows), CV_INTER_LINEAR);
-			//cv::imshow("perspective",dst);
+			cv::warpPerspective(src, dst, imp.getPersMat(), cv::Size(src.cols, src.rows), CV_INTER_LINEAR);
 			dst.copyTo(copyImg2);
-			//cv::waitKey(0);
-			//cv::GaussianBlur(dst, dst,cv::Size(3,3),2,2);
+
 			//@comment hsvを利用して赤色を抽出
 			//入力画像、出力画像、変換、h最小値、h最大値、s最小値、s最大値、v最小値、v最大値 h:(0-180)実際の1/2
 			//imp.colorExtraction(dst, colorExtra, CV_BGR2HSV, h_value, h_value2, s_value, 255, v_value, 255);
@@ -232,7 +211,6 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			colorExtra.copyTo(pImg);
 			cv::cvtColor(colorExtra, colorExtra, CV_BGR2GRAY);//@comment グレースケールに変換
 
-		
 			//----------------------二値化-----------------------------------------------
 			cv::threshold(colorExtra, binari_2, 0, 255, CV_THRESH_BINARY);
 			cv::dilate(binari_2, binari_2, element, cv::Point(-1, -1), 3); //膨張処理3回 最後の引数で回数を設定
@@ -277,6 +255,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 					P0[i] = P0[i - 1];
 				}
 			}
+
 			else{
 				action = 0;
 			}
@@ -287,51 +266,35 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 				xbee.sentAigamoCommand(action, arduino);
 			}
 			////std::cout << "cmd " << int(command) << std::endl;
-			cv::UMat test,test2;
+			cv::UMat test, test2;
 			src.copyTo(test);
 			dst.copyTo(test2);
 
-			cv::warpPerspective(test2, test, imp.getInvPerse(), cv::Size(test.cols,test.rows), CV_INTER_LINEAR);
+			cv::warpPerspective(test2, test, imp.getInvPerse(), cv::Size(test.cols, test.rows), CV_INTER_LINEAR);
 
 
 			//-------------------重心点のプロット----------------------------------------- 
 			if (!point.y == 0) { //@comment point.y == 0の場合はexceptionが起こる( 0除算 )
-				//circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-				//circle(copyImg, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
-				//@comment 重心点の移動履歴
-				//circle(copyImg, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
+				
 				circle(copyImg, imp.calcHomoPoint(cv::Point2f(point)), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
-
-
-				//circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(255, 255, 255), -1, CV_AA);
-				//circle(dst, cv::Point(point.x, point.y + 6 * ((1000 / point.y) + 1)), 8, cv::Scalar(0, 0, 0), -1, CV_AA);
-				//@comment 重心点の移動履歴
 				circle(dst, cv::Point(point.x, point.y), 8, cv::Scalar(0, 0, 255), -1, CV_AA);
 			}
 
 			//------------------ターゲットのプロット--------------------------------------
+
 			control.plot_target(dst, P0[4]);
-			control.plot_transform_target(copyImg,P0[4],imp.getInvPerse());
+			control.plot_transform_target(copyImg, P0[4], imp.getInvPerse());
 
 			//------------------マス, 直進領域のプロット--------------------------------------
 
-			s2.showSOM3(dst);
-			s2.showSOM2(copyImg, imp.getInvPerse());
-			
+			s2.showSOM3(dst,control.get_nowTargetArea());
+			s2.showSOM2(copyImg, imp.getInvPerse(),control.get_nowTargetArea());
+
 			//---------------------表示部分----------------------------------------------
-
-			//cv::resize(dst, dst, cv::Size(700, 700));
-		
-
 
 			cv::imshow("dst_image", dst);//@comment 出力画像
 			cv::imshow("copyImg", copyImg);
-			//cv::imshow("copyImg2", copyImg2);
-			//cv::imshow("test",test);
-			//cv::imshow("test2",test2);
-			//cv::imshow("colorExt", extra_img);//@comment 赤抽出画像
-			//cv::imshow("plot_img", pImg);
-
+			
 			//@comment "q"を押したらプログラム終了
 			if (src.empty() || cv::waitKey(50) == 113)
 			{
@@ -341,7 +304,7 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			}
 		}
 		frameNum++;
-	} ///end whileq
+	} 
 	ofs.close(); //@comment ファイルストリームの解放
 }
 

@@ -77,5 +77,6 @@ public:
 
 	void setH(cv::Mat H);
 
+	std::vector<cv::Point2f> getPerseArea(std::vector<cv::Point2f> &Pos);
 	//void perseSOM(cv::UMat &img, SOM &som);
 };
