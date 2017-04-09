@@ -86,7 +86,7 @@ void SOM::Init2(cv::Mat &src){
 	calcsom(width, height, storeNeuron, dst, src); //somの計算
 	this->som = storeNeuron;
 	std::cout << "fin" << std::endl;
-	cv::waitKey(1000); //プログラムの終了
+	//cv::waitKey(1000); //プログラムの終了
 }
 
 
@@ -165,13 +165,13 @@ void SOM::showSOM(int index, std::vector<int> &linked, std::vector<Neuron> &def,
 	cv::Mat perspective_matrix = getPerspectiveTransform(pts1, pts2);
 	cv::warpPerspective(im, im, perspective_matrix, cv::Size(im.cols, im.rows), cv::INTER_LINEAR);
 	cv::resize(im, im, cv::Size(), 0.5, 0.5);
-	cv::imshow("show", im);
+	//cv::imshow("show", im);
 	//cv::imwrite(setImageName("Default_SOM", time),im);
 	//cv::waitKey(1);
 }
 
 void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
-	cv::namedWindow("s", 1);
+	//cv::namedWindow("s", 1);
 	std::vector<Neuron> defo = som;
 	float t = 1;
 	static float max_t = 35000;
@@ -320,16 +320,16 @@ void SOM::calcsom(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat 
 		if (int(t) % 1000 == 0){
 
 			showSOM(index, linked, defo, t);
-			cv::imshow("s", cpimg);
+			//cv::imshow("s", cpimg);
 			//cv::imwrite(setImageName("Real_Imge", t/20), cpimg);
-			cv::waitKey(1);
+			//cv::waitKey(1);
 		}
 		t++;
 		index = 0;
 		count = 0;
 		distFlag = 0;
 	}
-	cv::imshow("s", cpimg);
+	//cv::imshow("s", cpimg);
 }
 
 void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat &origin){
@@ -484,16 +484,16 @@ void SOM::calcsom2(int w, int h, std::vector<Neuron> &som, cv::Mat &src, cv::Mat
 		if (int(t) % 1000 == 0){
 
 			showSOM(index, linked, defo, t);
-			cv::imshow("s2", cpimg);
+			//cv::imshow("s2", cpimg);
 			cv::imwrite(setImageName("Real_Imge_Perspective", t/20), cpimg);
-			cv::waitKey(1);
+			//cv::waitKey(1);
 		}
 		t++;
 		index = 0;
 		count = 0;
 		distFlag = 0;
 	}
-	cv::imshow("s", cpimg);
+	//cv::imshow("s", cpimg);
 }
 
 void SOM::Imgproc(cv::Mat &src, cv::Mat &dst){

@@ -6,8 +6,8 @@
 #include <time.h>
 
 #define GRAVITY 1      //画像中の領域 : 0  注目領域 : 1
-#define CAM_ID 0	   //カメラID
-const LPCSTR com = "COM3";		//COMポート名
+#define CAM_ID 1	   //カメラID
+const LPCSTR com = "COM5";		//COMポート名
 std::vector<cv::Point2f> Pos;	//水田の四隅の点
 std::vector<cv::Point2f> Pos2;
 
@@ -79,26 +79,27 @@ void getCoordinates(int event, int x, int y, int flags, void* param)
 
 //画像を取得し,水田領域を設定
 void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
-	int width, height;
+	int width=10, height=10;
 	cv::Mat field;
 	cv::UMat src_frame, dst_img;
 
 
-	std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
-	std::cout << "横 : ";    std::cin >> width;
-	std::cout << "縦 : ";    std::cin >> height;
-	std::cout << std::endl;
+	//std::cout << "水田の大きさを入力してください(m)単位" << std::endl;
+	//std::cout << "横 : ";    std::cin >> width;
+	//std::cout << "縦 : ";    std::cin >> height;
+	//std::cout << std::endl;
 
 	width *= 100;
 	height *= 100;
 
-	if (width < 300 || height < 300) //@comment 3x3(m)以上の領域を指定
-	{
-		std::cout << "※ 縦、横それぞれ３ｍ以上を指定してください" << std::endl;
-		std::cout << std::endl;
-		system("PAUSE");
-		exit(0);
-	}
+	//if (width < 300 || height < 300) //@comment 3x3(m)以上の領域を指定
+	//{
+	//	std::cout << "※ 縦、横それぞれ３ｍ以上を指定してください" << std::endl;
+	//	std::cout << std::endl;
+	//	system("PAUSE");
+	//	exit(0);
+	//}
+
 	imp.setField(width, height);
 	nm30_init();
 	nm30_set_panorama_mode(1, 11); //@comment 魚眼補正
@@ -110,7 +111,7 @@ void setUp(LPCSTR com, HANDLE &hdl, Img_Proc &imp){
 	//if (!sample_img.data)exit(0);								//テスト画像用（SOM）
 	//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
 	//sample_img.copyTo(src_frame); //テスト画像用（SOM）
-	std::cout << "水田の領域をクリックしてください４点 " << std::endl;
+	std::cout << "水田の領域を左下から時計回りになるように４点クリックしてください" << std::endl;
 
 	//------------------座標取得-----------------------------------------------
 	//画像中からマウスで4 ~ 10点を取得その後右クリックすると変換処理が開始する
@@ -179,6 +180,10 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 	//cv::createTrackbar("V", "colorExt", &v_value, 255);
 	///////////////////////////////////////////////////////////////
 
+	std::cout << "a: 自動掃引" << std::endl;
+	std::cout << "s: 停止" << std::endl;
+	std::cout << "q もしくはウィンドウ右上の×ボタン : 終了" << std::endl;
+
 	while (1){
 		imp.getFrame().copyTo(src);
 		//cv::resize(sample_img, sample_img, cv::Size(), 0.15, 0.15); //テスト画像用（SOM）
@@ -190,9 +195,12 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 					xbee.sentManualCommand(byte(0x00), arduino);
 					std::cout << "停止" << std::endl << std::endl;
 				}
-				if (command == 'm') {
+				if (command == 'q') {
 					xbee.sentManualCommand(byte(0x01), arduino);
-					std::cout << "手動掃引 " << std::endl << std::endl;
+					std::cout << "終了 " << std::endl << std::endl;
+					cv::destroyAllWindows();
+					ofs.close(); //@comment ファイルストリームの解放
+					break;
 				}
 				if (command == 'a') {
 					xbee.sentManualCommand(byte(0x01), arduino);
@@ -295,13 +303,15 @@ void Moving(HANDLE &arduino, Xbee_com &xbee, Img_Proc &imp){
 			cv::imshow("dst_image", dst);//@comment 出力画像
 			cv::imshow("copyImg", copyImg);
 			
+			cv::waitKey(1);
+
 			//@comment "q"を押したらプログラム終了
-			if (src.empty() || cv::waitKey(50) == 113)
-			{
-				cv::destroyAllWindows();
-				ofs.close(); //@comment ファイルストリームの解放
-				break;
-			}
+			//if (src.empty() || cv::waitKey(50) == 113)
+			//{
+			//	cv::destroyAllWindows();
+			//	ofs.close(); //@comment ファイルストリームの解放
+			//	break;
+			//}
 		}
 		frameNum++;
 	} 
